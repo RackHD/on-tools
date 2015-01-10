@@ -8,14 +8,14 @@ var di = require('di'),
     injector = new di.Injector(
         core.injectables
     ),
-    logger = injector.get('Logger').initialize('Logs Sink'),
+    logger = injector.get('Logger').initialize('Events Sink'),
     messenger = injector.get('Services.Messenger');
 
 messenger.start().then(function () {
-    messenger.exchange('logging', 'topic', {
+    messenger.exchange('events', 'topic', {
         durable: true
     }).then(function () {
-        messenger.subscribe('logging', '#', function (message) {
+        messenger.subscribe('events', '#', function (message) {
             console.log(message.data);
         }).done();
     });
