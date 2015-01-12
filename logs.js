@@ -16,7 +16,7 @@ messenger.start().then(function () {
         durable: true
     }).then(function () {
         messenger.subscribe('logging', '#', function (message) {
-            console.log(message.data);
+            message.data.print();
         }).done();
     });
 }).catch(function (error) {
