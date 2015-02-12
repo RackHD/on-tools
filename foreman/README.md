@@ -9,7 +9,13 @@ all services becomes 10 commands shorter using foreman.
 
 ## Installation
 
-sudo npm install -g foreman
+```
+cd renasar-tools
+npm install
+
+Add renasar-tools/node_modules/.bin to your PATH variable in .bashrc (linux) 
+or .bash_profile (osx)
+```
 
 ## Usage
 
