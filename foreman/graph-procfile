@@ -1,0 +1,3 @@
+# SUDO must be enabled in the terminal before running nf start (or run sudo nf start)
+# See .env for environment variable definitions
+graph: /bin/bash -c "echo running $TASKGRAPHDIR/index.js; cd $TASKGRAPHDIR && exec sudo node index.js"
