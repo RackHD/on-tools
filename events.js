@@ -15,8 +15,8 @@ messenger.start().then(function () {
     messenger.exchange('events', 'topic', {
         durable: true
     }).then(function () {
-        messenger.subscribe('events', '#', function (message) {
-            console.log(message.data);
+        messenger.subscribe('events', '#', function (event) {
+            console.log(event);
         }).done();
     });
 }).catch(function (error) {
