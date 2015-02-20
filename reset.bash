@@ -29,3 +29,5 @@ npm install
 cd ~/src/renasar-taskgraph
 rm -rf node_modules
 npm install
+# reset AMQP
+rabbitmqctl stop_app; rabbitmqctl force_reset; rabbitmqctl start_app
