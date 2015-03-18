@@ -8,11 +8,11 @@ screen -r renasar -X hardstatus alwayslastline "$SCREEN_HARDSTATUS"
 
 # send commands to screen session to run the processes in new 'windows' with titles specific to the commands
 #screen -S renasar -p shell -X screen -t top /bin/bash -c 'top'
-screen -S renasar -p shell -X screen -t http /bin/bash -c 'less -R /var/log/upstart/renasar-http.log'
-screen -S renasar -p shell -X screen -t taskgraph /bin/bash -c 'less -R /var/log/upstart/renasar-taskgraph.log'
-screen -S renasar -p shell -X screen -t syslog /bin/bash -c 'less -R /var/log/upstart/renasar-syslog.log'
-screen -S renasar -p shell -X screen -t dhcp /bin/bash -c 'less -R /var/log/upstart/renasar-dhcp.log'
-screen -S renasar -p shell -X screen -t tftp /bin/bash -c 'less -R /var/log/upstart/renasar-tftp.log'
+screen -S renasar -p shell -X screen -t http /bin/bash -c 'less -R /var/log/upstart/on-http.log'
+screen -S renasar -p shell -X screen -t taskgraph /bin/bash -c 'less -R /var/log/upstart/on-taskgraph.log'
+screen -S renasar -p shell -X screen -t syslog /bin/bash -c 'less -R /var/log/upstart/on-syslog.log'
+screen -S renasar -p shell -X screen -t dhcp /bin/bash -c 'less -R /var/log/upstart/on-dhcp.log'
+screen -S renasar -p shell -X screen -t tftp /bin/bash -c 'less -R /var/log/upstart/on-tftp.log'
 
 echo "use 'screen -R' to connect to the screens."
 echo 'Control-a " to get a list and select screens'

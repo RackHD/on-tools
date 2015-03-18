@@ -10,16 +10,16 @@ all services becomes 10 commands shorter using foreman.
 ## Installation
 
 ```
-cd renasar-tools
+cd on-tools
 npm install
 
-Add renasar-tools/node_modules/.bin to your PATH variable in .bashrc (linux) 
+Add on-tools/node_modules/.bin to your PATH variable in .bashrc (linux)
 or .bash_profile (osx)
 ```
 
 ## Usage
 
-Edit the .env file, changing BASEPATH to equal whatever directory your 
+Edit the .env file, changing BASEPATH to equal whatever directory your
 renasar repos are held in.
 
 There are several pre-defined procfiles with different configurations for
@@ -43,7 +43,7 @@ To run only dhcp, tftp and syslog:
 sudo nf -j minor-services-procfile start
 ```
 
-To run any individual process from this directory, choose any of the individual 
+To run any individual process from this directory, choose any of the individual
 service procfiles (dhcp-procfile, http-procfile, etc.) and run:
 
 ```
@@ -51,7 +51,7 @@ sudo nf -j <procfile> start
 ```
 
 Obviously this last command can simply be performed by changing directories
-into renasar-<repo> and running sudo node index.js, but the intent here is to
+into on-<repo> and running sudo node index.js, but the intent here is to
 enable developers to invoke all Renasar services from one directory. As always,
 bash aliases can be created to shorten these commands. The downside of this
 approach is the loss of natural log coloring from the processes themselves. Buyer beware.
