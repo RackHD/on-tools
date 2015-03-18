@@ -1,24 +1,19 @@
 {
-  "name": "renasar-tools",
+  "name": "on-tools",
   "version": "0.0.0",
-  "description": "Renasar Tools",
+  "description": "OnRack Tools",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/renasar/renasar-tools.git"
+    "url": "git+ssh://git@hwstashprd01.isus.emc.com:7999/onrack/on-tools.git"
   },
-  "author": "",
   "license": "Proprietary",
-  "bugs": {
-    "url": "https://github.com/renasar/renasar-tools/issues"
-  },
-  "homepage": "https://github.com/renasar/renasar-tools",
   "dependencies": {
-    "di": "git+ssh://git@github.com/renasar/di.js.git",
+    "di": "git+ssh://git@hwstashprd01.isus.emc.com:7999/onrack/di.js.git",
     "foreman": "^1.3.0",
-    "renasar-core": "git+ssh://git@github.com/renasar/renasar-core.git"
+    "on-core": "git+ssh://git@hwstashprd01.isus.emc.com:7999/onrack/on-core.git"
   }
 }

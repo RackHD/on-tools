@@ -4,7 +4,7 @@
 'use strict';
 
 var di = require('di'),
-    core = require('renasar-core')(di),
+    core = require('on-core')(di),
     injector = new di.Injector(
         core.injectables
     ),

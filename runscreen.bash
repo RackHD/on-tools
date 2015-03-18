@@ -9,11 +9,11 @@ screen -r renasar -X hardstatus alwayslastline "$SCREEN_HARDSTATUS"
 screen -S renasar -p shell -X screen -t top /bin/bash -c 'top'
 screen -S renasar -p shell -X screen -t rabbit /bin/bash -c 'rabbitmq-server'
 sleep 5 # wait for rabbitMQ to be running
-screen -S renasar -p shell -X screen -t taskgraph /bin/bash -c 'cd ~/src/renasar-taskgraph; sudo node index.js'
-screen -S renasar -p shell -X screen -t dhcp /bin/bash -c 'cd ~/src/renasar-dhcp; sudo node index.js'
-screen -S renasar -X screen -t tftp /bin/bash -c 'cd ~/src/renasar-tftp; sudo node index.js'
-screen -S renasar -X screen -t syslog /bin/bash -c 'cd ~/src/renasar-syslog; sudo node index.js'
-screen -S renasar -p shell -X screen -t http /bin/bash -c 'cd ~/src/renasar-http; sudo node index.js'
+screen -S renasar -p shell -X screen -t taskgraph /bin/bash -c 'cd ~/src/on-taskgraph; sudo node index.js'
+screen -S renasar -p shell -X screen -t dhcp /bin/bash -c 'cd ~/src/on-dhcp; sudo node index.js'
+screen -S renasar -X screen -t tftp /bin/bash -c 'cd ~/src/on-tftp; sudo node index.js'
+screen -S renasar -X screen -t syslog /bin/bash -c 'cd ~/src/on-syslog; sudo node index.js'
+screen -S renasar -p shell -X screen -t http /bin/bash -c 'cd ~/src/on-http; sudo node index.js'
 
 echo "use 'screen -R' to connect to the screens."
 echo 'Control-a " to get a list and select screens'
