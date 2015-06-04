@@ -12,17 +12,14 @@ var di = require('di'),
     messenger = injector.get('Services.Messenger');
 
 messenger.start().then(function () {
-    messenger.exchange('events', 'topic', {
-        durable: true
-    }).then(function () {
-        messenger.subscribe('events', '#', function (event) {
-            console.log(event);
-        }).done();
+    return messenger.subscribe('on.events', '#', function (e) {
+        console.log(e);
     });
 }).catch(function (error) {
     logger.error(error, { error: error });
 });
 
 process.on('SIGINT', function () {
-    messenger.stop();
+   messenger.stop();
 });
+
