@@ -1,3 +1,5 @@
+Copyright 2015, EMC, Inc.
+
 # node-foreman
 node-foreman is a tool for starting multiple processes with one command and
 combining their stdout together into the stdout of the foreman process.

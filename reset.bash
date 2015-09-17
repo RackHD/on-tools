@@ -1,4 +1,7 @@
 #!/bin/bash
+
+# Copyright 2015, EMC, Inc.
+
 set -x
 # FOG
 cd ~/src/on-fog-ui
