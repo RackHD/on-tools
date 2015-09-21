@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# Copyright 2015, EMC, Inc.
+
 # set up screen ala DevStack
 screen -AmdS renasar -t shell -s /bin/bash
 SCREEN_HARDSTATUS='%{= .} %-Lw%{= .}%> %n%f %t*%{= .}%+Lw%< %-=%{g}(%{d}%H/%l%{g})'

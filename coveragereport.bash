@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# Copyright 2015, EMC, Inc.
+
 PROJECTS="on-core on-dhcp on-http on-tftp on-syslog on-tasks on-taskgraph"
 
 cd ..
