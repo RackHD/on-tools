@@ -1,5 +1,0 @@
-# Copyright 2015, EMC, Inc.
-
-# SUDO must be enabled in the terminal before running nf start (or run sudo nf start)
-# See .env for environment variable definitions
-dhcp: /bin/bash -c "echo running $DHCPDIR/index.js; cd $DHCPDIR && exec sudo node index.js"

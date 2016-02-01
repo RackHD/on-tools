@@ -1,5 +1,0 @@
-# Copyright 2015, EMC, Inc.
-
-# SUDO must be enabled in the terminal before running nf start (or run sudo nf start)
-# See .env for environment variable definitions
-syslog: /bin/bash -c "echo running $SYSLOGDIR/index.js; cd $SYSLOGDIR && exec sudo node index.js"

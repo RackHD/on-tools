@@ -1,4 +1,6 @@
 Copyright 2015, EMC, Inc.
 
 # on-tools
-OnRack Tools
+
+Ancilliary scripts and tools useful for RackHD deployments, but not nessecarily
+part of the core RackHD feature set.
