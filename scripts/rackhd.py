@@ -44,7 +44,7 @@ class RackhdInventory(object):
             output += '    "vars" : {\n'
             for key,result in info.iteritems():
                 output += '      "' + key + '": ' + json.dumps(json.loads(result), sort_keys=True, indent=2) + ',\n'
-            output += '      "ansible_ssh_user": "renasar"\n'
+            output += '      "ansible_ssh_user": "monorail"\n'
             output += '    }\n'
             output += '  }\n'
         except KeyError:
