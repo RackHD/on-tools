@@ -1,0 +1,21 @@
+{
+  "ignore-ref": [
+    "VLanNetworkInterface.1.0.0_VLanNetworkInterface",
+    "Settings.1.0.0_Settings",
+    "Resource_ReferenceableMember",
+    "Resource.1.0.0_ReferenceableMember",
+    "Resource_Resource",
+    "Resource_ResourceCollection",
+    "Event.1.0.0_Event",
+    "EventDestination.1.0.0_EventDestination",
+    "MessageRegistry.1.0.0_MessageRegistry",
+    "Redundancy.1.0.0_Redundancy",
+    "Event.1.0.0_EventRecord",
+    "EventDestination.1.0.0_HttpHeaderProperty",
+    "MessageRegistry.1.0.0_MessageProperty",
+    "Resource.1.0.0_Resource",
+    "Resource_Item",
+    "Resource.1.0.0_ResourceCollection",
+    "MessageRegistry.1.0.0_Message"
+  ]
+}
