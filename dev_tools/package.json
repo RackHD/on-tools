@@ -12,8 +12,7 @@
   },
   "license": "Apache-2.0",
   "dependencies": {
-    "di": "git+https://5f5fdee3b5f3bc054cece98ad854c3090043f3c0:x-oauth-basic@github.com/RackHD/di.js.git",
-    "foreman": "^1.3.0",
-    "on-core": "git+https://5f5fdee3b5f3bc054cece98ad854c3090043f3c0:x-oauth-basic@github.com/RackHD/on-core.git"
+    "di": "git+https://github.com/RackHD/di.js.git",
+    "on-core": "git+https://github.com/RackHD/on-core.git"
   }
 }
