@@ -18,108 +18,210 @@
     <script type="text/javascript" src="../data/compare_list.js"></script>
     <script type="text/javascript" src="config.js"></script>
     <script type="text/javascript" id="compare_data" src=""></script>
+</head>
+<body>
 
-    <script type="text/javascript">
-        $(document).ready(function(){
-            var compare = false;
-            var show_diff = false;
-            var show_compared_data = true;
-            var case_data = case_info["log path"].split("-");
-            var atop_statistics = eval("atop_statistics_"+case_data[0]+"_"+case_data[1]);
-            var mongo_disk_statistics = eval("mongo_disk_statistics_"+case_data[0]+"_"+case_data[1]);
-            var mongo_document_statistics = eval("mongo_document_statistics_"+case_data[0]+"_"+case_data[1]);
-            var compare_list = eval("compare_list_"+case_data[0]+"_"+case_data[1]);
-            var process_list = eval("process_list_"+case_data[0]+"_"+case_data[1]);
+<nav class="navbar navbar-inverse navbar-fixed-top" style="background-color: #000000">
+    <a class="navbar-brand" href="#" style="color: white">RackHD Benchmark Report</a>
+</nav>
 
-            $("#compare-assist").hide();
+<div class="container">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="well well-sm" style="margin-top:50px">
+                <p id="case_name"><b>Case Name: </b></p>
+                <p id="case_log_path"><b>Case Log Path: </b></p>
+                <p id="case_start_time"><b>Case Start Time: </b></p>
+                <p id="case_end_time"><b>Case End Time: </b></p>
+                <p id="node_finish_time"><b>Node Finish Time: </b></p>
+            </div>
+        </div>
+    </div>
+</div>
 
-            $.each(compare_list, function(key, value){
-                $('#sel_timestamp')
-                        .append($('<option></option>>')
-                                .attr("value", key)
-                                .text(key));
+<div class="container">
+    <div class="row">
+        <div class="col-md-12 form-group form-horizontal">
+            <a href="#" class="list-group-item active" style="margin-bottom:10px">
+                Summary Report
+            </a>
+        </div>
+    </div>
+    <div class="row form-group">
+        <div class="col-md-3">
+            <label class="control-label">Choose an earlier log:</label>
+        </div>
+        <div class="col-md-9">
+            <select class="form-control" id="sel_timestamp"></select>
+        </div>
+    </div>
+    <div class="row form-group">
+        <div class="col-md-3">
+            <label class="control-label">Choose a test case:</label>
+        </div>
+        <div class="col-md-9">
+            <select class="form-control" id="sel_case"></select>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-sm-2 col-md-2 col-lg-2 form-group">
+            <button type="button" class="btn btn-primary" id="compare_btn">Compare</button>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-sm-12 col-md-12" id="compare-assist">
+            <div class="col-sm-5 col-md-5 col-lg-5">
+                <div class="form-group ">
+                    <label><input type="checkbox" id="show_diff_checkbox"> show diff</label>
+                    <label><input type="checkbox" id="show_target_checkbox" checked="true"> show target data</label>
+                </div>
+            </div>
+            <div class="col-sm-7 col-md-7 col-lg-7" >
+                <div class="form-group pull-right">
+                    <div style="float: right">
+                        <div class="legend-div">Original Data:<span
+                                style="background-color: black">&nbsp;&nbsp;&nbsp;&nbsp;</span>
+                        </div>
+                        <div class="legend-div">Compared Data:<span
+                                style="background-color: var(--compare-element-color)">&nbsp;&nbsp;&nbsp;&nbsp;</span>
+                        </div>
+                    </div>
+                    <div style="float: right">
+                        <div class="legend-div">Delta-Better:<span
+                                style="background-color: var(--diff-better-color)">&nbsp;&nbsp;&nbsp;&nbsp;</span>
+                        </div>
+                        <div class="legend-div">Delta-Worse:<span
+                                style="background-color: var(--diff-worse-color)">&nbsp;&nbsp;&nbsp;&nbsp;</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</div>
+
+<div class="container">
+    <div class="row">
+        <div class="col-md-12">
+            <a href="#" class="list-group-item active">Summary Report</a>
+            <table class="table table-hover table-squeezed table-align-right" id="case_summary_table"></table>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6">
+            <a href="#" class="list-group-item active">Mongo Disk Statistics Table</a>
+            <table class="table table-hover table-squeezed table-align-left" id="mongo_disk_statistics_table"></table>
+        </div>
+        <div class="col-md-6">
+            <a href="#" class="list-group-item active">Mongo Document Statistics Table</a>
+            <table class="table table-hover table-squeezed table-align-left" id="mongo_document_statistics_table"></table>
+        </div>
+    </div>
+</div>
+
+<script type="text/javascript">
+    $(document).ready(function(){
+        var compare = false;
+        var show_diff = false;
+        var show_compared_data = true;
+        var case_data = case_info["log path"].split("-");
+        var atop_statistics = eval("atop_statistics_"+case_data[0]+"_"+case_data[1]);
+        var mongo_disk_statistics = eval("mongo_disk_statistics_"+case_data[0]+"_"+case_data[1]);
+        var mongo_document_statistics = eval("mongo_document_statistics_"+case_data[0]+"_"+case_data[1]);
+        var compare_list = eval("compare_list_"+case_data[0]+"_"+case_data[1]);
+        var process_list = eval("process_list_"+case_data[0]+"_"+case_data[1]);
+
+        $("#compare-assist").hide();
+
+        $.each(compare_list, function(key, value){
+            $('#sel_timestamp')
+                    .append($('<option></option>>')
+                            .attr("value", key)
+                            .text(key));
+        });
+
+        updateCaseSel(compare_list);
+
+        $("#sel_timestamp").change(function(){
+            updateCaseSel(compare_list)
+        });
+
+        updateSummaryTable($('#case_summary_table'),
+                process_list,
+                configuration,
+                atop_statistics);
+
+        updateDbDiskTable($('#mongo_disk_statistics_table'), mongo_disk_statistics);
+
+        updateDbDocTable($('#mongo_document_statistics_table'), mongo_document_statistics);
+
+        $("#compare_btn").click(function(){
+            $("#compare-assist").show();
+            var node_head = $("head");
+            compare = true;
+            var target_timestamp = $("#sel_timestamp").val();
+            var target_case = $("#sel_case option:selected").text();
+            var target_script_names = ["atop_summary.js", "db_disk_summary.js", "db_doc_summary.js"];
+
+            $.each(target_script_names, function(i, script){
+                var target_script_path = "../../../" + target_timestamp + "/" + target_case + '/data/' + script;
+                var script_element = document.createElement('script');
+                script_element.setAttribute('type', 'text/javascript');
+                script_element.setAttribute('src', target_script_path);
+                node_head.append(script_element); //synchronize load
             });
 
-            updateCaseSel(compare_list);
-
-            $("#sel_timestamp").change(function(){
-                updateCaseSel(compare_list)
-            });
+            var compare_target_atop = eval("atop_statistics_" + target_timestamp.replace('-', '_'));
+            var compare_target_db_disk = eval("mongo_disk_statistics_" + target_timestamp.replace('-', '_'));
+            var compare_target_db_doc = eval("mongo_document_statistics_" + target_timestamp.replace('-', '_'));
 
             updateSummaryTable($('#case_summary_table'),
                     process_list,
                     configuration,
-                    atop_statistics);
+                    atop_statistics,
+                    compare_target_atop);
 
-            updateDbDiskTable($('#mongo_disk_statistics_table'), mongo_disk_statistics);
+            updateDbDiskTable($('#mongo_disk_statistics_table'),
+                    mongo_disk_statistics, compare_target_db_disk);
 
-            updateDbDocTable($('#mongo_document_statistics_table'), mongo_document_statistics);
+            updateDbDocTable($('#mongo_document_statistics_table'),
+                    mongo_document_statistics, compare_target_db_doc);
 
-            $("#compare_btn").click(function(){
-                $("#compare-assist").show();
-                var node_head = $("head");
-                compare = true;
-                var target_timestamp = $("#sel_timestamp").val();
-                var target_case = $("#sel_case option:selected").text();
-                var target_script_names = ["atop_summary.js", "db_disk_summary.js", "db_doc_summary.js"];
+            $(".compared").show();
+            $(".diff_better").hide();
+            $(".diff_worse").hide();
+        });
 
-                $.each(target_script_names, function(i, script){
-                    var target_script_path = "../../../" + target_timestamp + "/" + target_case + '/data/' + script;
-                    var script_element = document.createElement('script');
-                    script_element.setAttribute('type', 'text/javascript');
-                    script_element.setAttribute('src', target_script_path);
-                    node_head.append(script_element); //synchronize load
-                });
-
-                var compare_target_atop = eval("atop_statistics_" + target_timestamp.replace('-', '_'));
-                var compare_target_db_disk = eval("mongo_disk_statistics_" + target_timestamp.replace('-', '_'));
-                var compare_target_db_doc = eval("mongo_document_statistics_" + target_timestamp.replace('-', '_'));
-
-                updateSummaryTable($('#case_summary_table'),
-                        process_list,
-                        configuration,
-                        atop_statistics,
-                        compare_target_atop);
-
-                updateDbDiskTable($('#mongo_disk_statistics_table'),
-                        mongo_disk_statistics, compare_target_db_disk);
-
-                updateDbDocTable($('#mongo_document_statistics_table'),
-                        mongo_document_statistics, compare_target_db_doc);
-
-                $(".compared").show();
+        $("#show_diff_checkbox").click(function(){
+            show_diff = !show_diff;
+            if(show_diff){
+                $(".diff_better").show();
+                $(".diff_worse").show();
+            }
+            else {
                 $(".diff_better").hide();
                 $(".diff_worse").hide();
-            });
-
-            $("#show_diff_checkbox").click(function(){
-                show_diff = !show_diff;
-                if(show_diff){
-                    $(".diff_better").show();
-                    $(".diff_worse").show();
-                }
-                else {
-                    $(".diff_better").hide();
-                    $(".diff_worse").hide();
-                }
-            });
-
-            $("#show_target_checkbox").click(function(){
-                show_compared_data = !show_compared_data;
-                if(show_compared_data){
-                    $(".compared").show();
-                }
-                else {
-                    $(".compared").hide();
-                }
-            });
-
-            $("#case_name").append(case_info["case name"]);
-            $("#case_log_path").append(case_info["log path"]);
-            $("#case_start_time").append(case_info["time marker"]["start"]);
-            $("#case_end_time").append(case_info["time marker"]["end"]);
-            $("#node_finish_time").append(case_info["time marker"]["node finish"]);
+            }
         });
+
+        $("#show_target_checkbox").click(function(){
+            show_compared_data = !show_compared_data;
+            if(show_compared_data){
+                $(".compared").show();
+            }
+            else {
+                $(".compared").hide();
+            }
+        });
+
+        $("#case_name").append(case_info["case name"]);
+        $("#case_log_path").append(case_info["log path"]);
+        $("#case_start_time").append(case_info["time marker"]["start"]);
+        $("#case_end_time").append(case_info["time marker"]["end"]);
+        $("#node_finish_time").append(case_info["time marker"]["node finish"]);
 
         function getSUMorMAX(dict){
             if(dict.hasOwnProperty('sum')){
@@ -531,109 +633,7 @@
 
             return element_list;
         }
-    </script>
-</head>
-<body>
-
-<nav class="navbar navbar-inverse navbar-fixed-top" style="background-color: #000000">
-    <a class="navbar-brand" href="#" style="color: white">RackHD Benchmark Report</a>
-</nav>
-
-<div class="container">
-    <div class="row">
-        <div class="col-md-12">
-            <div class="well well-sm" style="margin-top:50px">
-                <p id="case_name"><b>Case Name: </b></p>
-                <p id="case_log_path"><b>Case Log Path: </b></p>
-                <p id="case_start_time"><b>Case Start Time: </b></p>
-                <p id="case_end_time"><b>Case End Time: </b></p>
-                <p id="node_finish_time"><b>Node Finish Time: </b></p>
-            </div>
-        </div>
-    </div>
-</div>
-
-<div class="container">
-    <div class="row">
-        <div class="col-md-12 form-group form-horizontal">
-            <a href="#" class="list-group-item active" style="margin-bottom:10px">
-                Summary Report
-            </a>
-        </div>
-    </div>
-    <div class="row form-group">
-        <div class="col-md-3">
-            <label class="control-label">Choose an earlier log:</label>
-        </div>
-        <div class="col-md-9">
-            <select class="form-control" id="sel_timestamp"></select>
-        </div>
-    </div>
-    <div class="row form-group">
-        <div class="col-md-3">
-            <label class="control-label">Choose a test case:</label>
-        </div>
-        <div class="col-md-9">
-            <select class="form-control" id="sel_case"></select>
-        </div>
-    </div>
-    <div class="row">
-        <div class="col-sm-2 col-md-2 col-lg-2 form-group">
-            <button type="button" class="btn btn-primary" id="compare_btn">Compare</button>
-        </div>
-    </div>
-
-    <div class="row">
-        <div class="col-sm-12 col-md-12" id="compare-assist">
-            <div class="col-sm-5 col-md-5 col-lg-5">
-                <div class="form-group ">
-                    <label><input type="checkbox" id="show_diff_checkbox"> show diff</label>
-                    <label><input type="checkbox" id="show_target_checkbox" checked="true"> show target data</label>
-                </div>
-            </div>
-            <div class="col-sm-7 col-md-7 col-lg-7" >
-                <div class="form-group pull-right">
-                    <div style="float: right">
-                        <div class="legend-div">Original Data:<span
-                                style="background-color: black">&nbsp;&nbsp;&nbsp;&nbsp;</span>
-                        </div>
-                        <div class="legend-div">Compared Data:<span
-                                style="background-color: var(--compare-element-color)">&nbsp;&nbsp;&nbsp;&nbsp;</span>
-                        </div>
-                    </div>
-                    <div style="float: right">
-                        <div class="legend-div">Delta-Better:<span
-                                style="background-color: var(--diff-better-color)">&nbsp;&nbsp;&nbsp;&nbsp;</span>
-                        </div>
-                        <div class="legend-div">Delta-Worse:<span
-                                style="background-color: var(--diff-worse-color)">&nbsp;&nbsp;&nbsp;&nbsp;</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-</div>
-
-<div class="container">
-    <div class="row">
-        <div class="col-md-12">
-            <a href="#" class="list-group-item active">Summary Report</a>
-            <table class="table table-hover table-squeezed table-align-right" id="case_summary_table"></table>
-        </div>
-    </div>
-
-    <div class="row">
-        <div class="col-md-6">
-            <a href="#" class="list-group-item active">Mongo Disk Statistics Table</a>
-            <table class="table table-hover table-squeezed table-align-left" id="mongo_disk_statistics_table"></table>
-        </div>
-        <div class="col-md-6">
-            <a href="#" class="list-group-item active">Mongo Document Statistics Table</a>
-            <table class="table table-hover table-squeezed table-align-left" id="mongo_document_statistics_table"></table>
-        </div>
-    </div>
-</div>
+    });
+</script>
 </body>
 </html>

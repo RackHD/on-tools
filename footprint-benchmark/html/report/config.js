@@ -1,4 +1,4 @@
-var configuration = 
+var configuration = // jshint ignore:line
 {
     "CPU": {
         "CPU": {

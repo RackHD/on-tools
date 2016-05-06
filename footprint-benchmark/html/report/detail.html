@@ -100,76 +100,77 @@
             
         });
 
-    showGraph(measure_data,
-            getConfiguration(configuration, measure, 'Short Description'),
-            getConfiguration(configuration, measure, 'unit'));
-    });
-    
-    function zeropad(x) {
-        return (x < 10) ? '0' + x : x;
-      }
+        showGraph(measure_data,
+                getConfiguration(configuration, measure, 'Short Description'),
+                getConfiguration(configuration, measure, 'unit'));
 
-    function showGraph(grap_data, description, unit) {
-        gs = new Dygraph(document.getElementById("table-div"),
-                grap_data,
-                {
-                    rollPeriod: 1,
-                    legend: 'always',
-                    title: description,
-                    titleHeight: 32,
-                    ylabel: unit,
-                    xlabel: 'Time',
-                    labelsDivStyles: {
-                        'text-align': 'right',
-                        'background': 'none'
-                    },
-                    axes: {
-                        x: {
-                            axisLabelWidth: 70,
-                            axisLabelFormatter: function (d, gran) {
-                                return zeropad(d.getHours()) + ":"
-                                        + zeropad(d.getMinutes()) + ":"
-                                        + zeropad(d.getSeconds());
+        function zeropad(x) {
+            return (x < 10) ? '0' + x : x;
+        }
+
+        function showGraph(grap_data, description, unit) {
+            gs = new Dygraph(document.getElementById("table-div"),
+                    grap_data,
+                    {
+                        rollPeriod: 1,
+                        legend: 'always',
+                        title: description,
+                        titleHeight: 32,
+                        ylabel: unit,
+                        xlabel: 'Time',
+                        labelsDivStyles: {
+                            'text-align': 'right',
+                            'background': 'none'
+                        },
+                        axes: {
+                            x: {
+                                axisLabelWidth: 70,
+                                axisLabelFormatter: function (d, gran) {
+                                    return zeropad(d.getHours()) + ":"
+                                            + zeropad(d.getMinutes()) + ":"
+                                            + zeropad(d.getSeconds());
+                                }
                             }
-                        }
-                    },
-                    strokeWidth: 1,
-                    customBars: false,
-                    logscale: false
-                });
-    }
+                        },
+                        strokeWidth: 1,
+                        customBars: false,
+                        logscale: false
+                    });
+        }
 
-    function getQueryStringParams(param){
-        var page_url = window.location.search.substring(1);
-        var page_vars = page_url.split('&');
-        for(var i = 0; i < page_vars.length; i++)
-        {
-            var param_name = page_vars[i].split('=');
-            if (param_name[0] == param) {
-                return param_name[1];
+        function getQueryStringParams(param){
+            var page_url = decodeURIComponent(window.location.search.substring(1));
+            var page_vars = page_url.split('&');
+            for(var i = 0; i < page_vars.length; i++)
+            {
+                var param_name = page_vars[i].split('=');
+                if (param_name[0] == param) {
+                    return param_name[1];
+                }
             }
         }
-    }
 
-    function loadDataJs(measure){
-        var script_path = "../data/" + measure.toLowerCase() + ".js";
-        var node_head = $("head");
-        var script_element = document.createElement('script');
-        script_element.setAttribute('type', 'text/javascript');
-        script_element.setAttribute('src', script_path);
-        node_head.append(script_element); //synchronize load
-    }
+        function loadDataJs(measure){
+            var script_path = "../data/" + measure.toLowerCase() + ".js";
+            var node_head = $("head");
+            var script_element = document.createElement('script');
+            script_element.setAttribute('type', 'text/javascript');
+            script_element.setAttribute('src', script_path);
+            node_head.append(script_element); //synchronize load
+        }
 
-    function getConfiguration(configuration, measure, key){
-        var value;
-        $.each(configuration, function(group, measure_obj){
-            if(measure_obj.hasOwnProperty(measure)){
-                value = measure_obj[measure][key];
-            }
-        });
+        function getConfiguration(configuration, measure, key){
+            var value;
+            $.each(configuration, function(group, measure_obj){
+                if(measure_obj.hasOwnProperty(measure)){
+                    value = measure_obj[measure][key];
+                    return value;
+                }
+            });
+        }
+    });
+    
 
-        return value;
-    }
 </script>
 </body>
 </html>
