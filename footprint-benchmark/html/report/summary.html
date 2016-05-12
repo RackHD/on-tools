@@ -125,8 +125,6 @@
 <script type="text/javascript">
     $(document).ready(function(){
         var compare = false;
-        var show_diff = false;
-        var show_compared_data = true;
         var case_data = case_info["log path"].split("-");
         var atop_statistics = eval("atop_statistics_"+case_data[0]+"_"+case_data[1]);
         var mongo_disk_statistics = eval("mongo_disk_statistics_"+case_data[0]+"_"+case_data[1]);
@@ -196,8 +194,7 @@
         });
 
         $("#show_diff_checkbox").click(function(){
-            show_diff = !show_diff;
-            if(show_diff){
+            if(this.checked){
                 $(".diff_better").show();
                 $(".diff_worse").show();
             }
@@ -208,8 +205,7 @@
         });
 
         $("#show_target_checkbox").click(function(){
-            show_compared_data = !show_compared_data;
-            if(show_compared_data){
+            if(this.checked){
                 $(".compared").show();
             }
             else {
