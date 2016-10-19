@@ -9,6 +9,21 @@ usage:
 --git-credential https://github.com/PengTian0,GITHUB \
 --force
 
+The parameters to this script:
+manifest-repo-url: the url of manifest repository
+manifest-repo-commit: the commit of repository manifest
+manifest-name: the filename of manifest
+builddir: the destination for checked out repositories
+version-file: the version file used to save the version of rackhd
+force: use destination directory, even if it exists
+git-credential: url, credentials pair for the access to github repos
+is-official-release: if true, this release is official, the default value is false
+                     
+The required parameters:
+manifest-repo-url
+manifest-name
+builddir
+git-credential
 """
 import argparse
 import sys
@@ -171,12 +186,12 @@ class UpdateRackhdVersion(object):
         """
         generate the version of RackHD
         :return: a big version like 1.1.1 if the release if official release
-                 a complete version like 1.1.1-rc-20161009123456-abcd123 if the release if daily build
+                 a complete version like 1.1.1~rc-20161009123456-abcd123 if the release if daily build
         """
         try:
             rackhd_dir = self._get_repo_dir("RackHD")
             version_generator = VersionGenerator(rackhd_dir)
-            #generate the big version like:1.1.1
+            # Generate the big version like:1.1.1
             big_version = version_generator.generate_big_version()
             if big_version is None:
                 print "Failed to generate big version for {0}".format(rackhd_dir)
@@ -184,15 +199,15 @@ class UpdateRackhdVersion(object):
             if self._is_official_release:
                 return big_version
             else:
-                #generate the candidate version like: devel or rc
+                # Generate the candidate version like: devel or rc
                 candidate_version = version_generator.generate_candidate_version()
-                #generate small version like: 20161009123456-abcd123 
+                # Generate small version like: 20161009123456-abcd123 
                 small_version_generator = VersionGenerator(self._manifest_repo_dir)
                 small_version = small_version_generator.generate_small_version()
                 if big_version is None or candidate_version is None or small_version is None:
                     print "Failed to generate version for RackHD, Exiting now..."
                     sys.exit(1)
-                version = "{0}-{1}-{2}".format(big_version, candidate_version, small_version)
+                version = "{0}~{1}-{2}".format(big_version, candidate_version, small_version)
                 return version
         except Exception,e:
             print "Failed to generate RackHD version due to {0} \n Exiting now...".format(e)
@@ -240,8 +255,8 @@ class UpdateRackhdVersion(object):
                     package_count += 1
                     is_depends = True
                     new_control_fp.write("Depends: ")
-                    #start to write the dependes
-                    #If the depends is on-xxx, it will be replace with on-xxx (= 1.1...)
+                    # Start to write the dependes
+                    # If the depends is on-xxx, it will be replace with on-xxx (= 1.1...)
                     for package in packages:
                         package_name = package.split(',',)[0].strip()
                         if ' ' in package_name:
@@ -306,7 +321,6 @@ class UpdateRackhdVersion(object):
             sys.exit(1)
 
         
-
 def parse_command_line(args):
     """
     Parse script arguments.
@@ -333,21 +347,23 @@ def parse_command_line(args):
                         help="destination for checked out repositories",
                         action="store")
 
-    parser.add_argument('--parameter-file',
-                        help="The jenkins parameter file that will used for succeeding Jenkins job",
+    parser.add_argument('--version-file',
+                        help="The file that is used to save rackhd version",
                         action='store',
-                        default="downstream_parameters")
+                        default="release_version")
 
     parser.add_argument("--force",
                         help="use destination dir, even if it exists",
                         action="store_true")
 
     parser.add_argument("--git-credential",
+                        required=True,
                         help="Git credentials for CI services",
                         action="append")
 
     parser.add_argument("--is-official-release",
-                        help="This release if official",
+                        default=False,
+                        help="whether this release is official",
                         action="store_true")
 
     parsed_args = parser.parse_args(args)
@@ -362,7 +378,6 @@ def write_downstream_parameters(filename, params):
     :param filename: The parameter file that will be used for making environment
      variable for downstream job.
     :param params: the parameters dictionary
-
     :return:
             None on success
             Raise any error if there is any
@@ -380,10 +395,10 @@ def write_downstream_parameters(filename, params):
             exit(2)
 
 def main():
-    # parse arguments
+    # Parse arguments
     args = parse_command_line(sys.argv[1:])
 
-    #start to initial an instance of UpdateRackhdVersion
+    # Start to initial an instance of UpdateRackhdVersion
     updater = UpdateRackhdVersion(args.manifest_repo_url, args.manifest_repo_commit, args.manifest_name, args.builddir)
     if args.force:
         updater.set_force(args.force)
@@ -395,19 +410,19 @@ def main():
     if args.git_credential:
         updater.set_git_credentials(args.git_credential)
 
-    #update the RackHD/debian/control according to manifest
+    # Update the RackHD/debian/control according to manifest
     updater.check_builddir()
     updater.clone_manifest()
     RackHD_version = updater.generate_RackHD_version()
     updater.update_RackHD_control()
 
-    if os.path.isfile(args.parameter_file):  # Delete existing parameter file
-        os.remove(args.parameter_file)
+    if os.path.isfile(args.version_file):  # Delete existing version file
+        os.remove(args.version_file)
 
-    # write parameters to parameter file
+    # Write parameters to version file
     downstream_parameters = {}
-    downstream_parameters['RACKHD_VERSION'] = RackHD_version
-    write_downstream_parameters(args.parameter_file, downstream_parameters)
+    downstream_parameters['PKG_VERSION'] = RackHD_version
+    write_downstream_parameters(args.version_file, downstream_parameters)
 
 if __name__ == "__main__":
     main()
