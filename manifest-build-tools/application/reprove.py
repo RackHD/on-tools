@@ -4,7 +4,7 @@
 
 # check out a set of repositories to match the manifest file
 
-# Copyright 2015-2016, EMC, Inc.
+# Copyright 2015, EMC, Inc.
 
 """
 usage:
@@ -15,6 +15,20 @@ usage:
 --git-credential https://github.com,GITHUB \
 --jobs 8 \
 checkout
+
+The parameters to this script:
+manifest: the path of manifest file
+builddir: the destination for checked out repositories
+force: use destination directory, even if it exists
+git-credential: url, credentials pair for the access to github repos
+jobs: number of parallel jobs to run. The number is related to the compute architecture, multi-core processors...
+action: the supported action, just like action1 action2 ...
+
+The required parameters:
+manifest
+builddir
+git-credential
+action
 """
 
 import argparse
@@ -22,7 +36,6 @@ import json
 import os
 import shutil
 import sys
-
 import config
 
 from urlparse import urlparse, urlunsplit
@@ -31,6 +44,7 @@ from manifest import Manifest
 from common import *
 
 class ManifestActions(object):
+    
     """
     valid actions:
     checkout: check out a set of repositories to match the manifest file
@@ -43,7 +57,8 @@ class ManifestActions(object):
         __git_credential - url, credentials pair for the access to github repos
         __manifest - Repository manifest contents
         __builddir - Destination for checked out repositories
-        __tagname - Tagname to be applied to all repos
+        __jobs - Number of parallel jobs to run
+        __actions -Supported actions
         :return:
         """
         self._force = False
@@ -60,49 +75,40 @@ class ManifestActions(object):
     def set_force(self, force):
         """
         Standard setter for force
-        : return: None
+        :param force: if true, overwrite a directory if it exists
+        :return: None
         """
         self._force = force
+
     def get_force(self):
         """
         Standard getter for git_credentials
-        : return: force
+        :return: force
         """
         return force
 
     def set_git_credentials(self, git_credential):
         """
         Standard setter for git_credentials
-        : return: None
+        :param git_credential: url, credentials pair for the access to github repos
+        :return: None
         """
         self._git_credentials = git_credential
         self.repo_operator.setup_gitbit(credentials=self._git_credentials)    
 
-
     def get_manifest(self):
         """
         Standard getter for manifest
-        :return: None
+        :return: an instance of Manifest
         """
         return self._manifest
 
-
-    def set_tagname(self, tagname):
-        """
-        Standard setter for tagname
-        : return: None
-        """
-        self._tagname = tagname
-
-    def get_tagname(self):
-        """
-        Standard getter for tagname
-        : return: tag name
-        """
-        return self._tagname
-
-
     def add_action(self, action):
+        """
+        Add action to actions
+        :param action: a string, just like: checkout
+        :return: None
+        """
         if action not in self.valid_actions:
             print "Unknown action '{0}' requested".format(action)
             print "Valid actions are:"
@@ -112,11 +118,11 @@ class ManifestActions(object):
         else:
             self.actions.append(action)
 
-
     def set_jobs(self, jobs):
         """
         Standard setter for jobs
-        : return: None
+        :param jobs: number of parallel jobs to run
+        :return: None
         """
         self._jobs = jobs
         if self._jobs < 1:
@@ -124,9 +130,11 @@ class ManifestActions(object):
             sys.exit(1)
 
     def handle_manifest(self, manifest_path):
-        # and then finally do some actual work, which might depend upon the command line
-        # option values
-
+        """
+        initial manifest and validate it
+        :param manifest_path: the path of manifest file
+        :return: None
+        """
         try:
             self._manifest = Manifest(manifest_path)
             self._manifest.validate_manifest()
@@ -141,8 +149,8 @@ class ManifestActions(object):
 
     def check_builddir(self):
         """
-        Checks the given builddir name and force flag. Deletes exists directory if one already
-        exists and --force is set
+        Checks the given builddir name and force flag. 
+        Deletes exists directory if one already exists and --force is set
         :return: None
         """
         if os.path.exists(self._builddir):
@@ -170,6 +178,11 @@ class ManifestActions(object):
             
 
     def directory_for_repo(self, repo):
+        """
+        Get the directory of a repository
+        :param repo: a dictionary
+        :return: the directary of repository
+        """
         if 'checked-out-directory-name' in repo:
             repo_directory = repo['checked-out-directory-name']
         else:
@@ -181,7 +194,6 @@ class ManifestActions(object):
 
         repo_directory = os.path.join(self._builddir, repo_directory)
         return repo_directory
-
 
 
 def parse_command_line(args):
@@ -202,6 +214,7 @@ def parse_command_line(args):
                         help="use destination dir, even if it exists",
                         action="store_true")
     parser.add_argument("--git-credential",
+                        required=True,
                         help="Git credentials for CI services",
                         action="append")
     parser.add_argument("--jobs",
@@ -216,9 +229,10 @@ def parse_command_line(args):
 
 
 def main():
-    # parse arguments
+    # Parse arguments
     args = parse_command_line(sys.argv[1:])
     
+    # Create and initial an instance of ManifestActions
     manifest_actions = ManifestActions(args.manifest, args.builddir)
 
     if args.force:
@@ -233,10 +247,10 @@ def main():
     if args.jobs:
         manifest_actions.set_jobs(args.jobs)
 
+    # Start to check out a set of repositories within a manifest file
     if 'checkout' in manifest_actions.actions:
         manifest_actions.check_builddir()
         manifest_actions.get_repositories()
-
 
 if __name__ == "__main__":
     main()
