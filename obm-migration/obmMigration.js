@@ -20,7 +20,7 @@ exec('mongodump', function(error, stdout, stderr) { // Backup mongo
              return waterline.start();
         })
         .then(function () {
-            return waterline.obms.setIndexes();
+            return Promise.all([waterline.obms.setIndexes(), waterline.ibms.setIndexes()]);
         })
         .then(function () {
             // Get node documents.
@@ -28,12 +28,13 @@ exec('mongodump', function(error, stdout, stderr) { // Backup mongo
             return waterline.nodes.findMongo();
         })
         .then(function (nodeDocuments) {
-            // Save OBM settings using OBM model.
-            var obmSavesToBeDone = [];
+            // Save OBM and SSH settings using OBM and IBM models.
+            var settingsSavesToBeDone = [];
             _.forEach(nodeDocuments, function (thisNode) {
                 var nodeId = thisNode._id.toString();
                 console.log(nodeId);
                 var obmSettingsList = thisNode.obmSettings;
+                var sshSettings = thisNode.sshSettings;
                 if (obmSettingsList) {
                     _.forEach(obmSettingsList, function (obmSettings) {
                         console.log('Saving: ' + nodeId + ' ' + JSON.stringify(obmSettings));
@@ -41,17 +42,28 @@ exec('mongodump', function(error, stdout, stderr) { // Backup mongo
                             .catch(function (err) {
                                 console.log('Error saving OBM record: ' + err.message);
                             });
-                        obmSavesToBeDone.push(obmSave);
+                        settingsSavesToBeDone.push(obmSave);
                     });
+                }
+                if (sshSettings) {
+                    console.log('Saving: ' + nodeId + ' ' + JSON.stringify(sshSettings));
+                    var newSshSettings = {};
+                    newSshSettings.config = sshSettings;
+                    newSshSettings.service = 'ssh-ibm-service';
+                    var ibmSave = waterline.ibms.upsertByNode(nodeId, newSshSettings)
+                        .catch(function (err) {
+                            console.log('Error saving IBM record: ' + err.message);
+                        });
+                    settingsSavesToBeDone.push(ibmSave);
                 }
             });
 
-            return Promise.all(obmSavesToBeDone);
+            return Promise.all(settingsSavesToBeDone);
         })
         .then(function () {
             // Delete OBM settings from all node documents.
             console.log('Removing node OBM settings...');
-            
+
             var query = {
                 obmSettings: {
                     $exists: true
@@ -69,7 +81,33 @@ exec('mongodump', function(error, stdout, stderr) { // Backup mongo
                 multi: true
             };
 
-            return waterline.nodes.runNativeMongo('update', [query, update, options]);
+            return waterline.nodes.runNativeMongo(
+                'update', [query, update, options]
+            );
+        })
+        .then(function () {
+            // Delete SSH settings from all node documents.
+            console.log('Removing node SSH settings...');
+
+            var query = {
+                sshSettings: {
+                    $exists: true
+                }
+            };
+            var update = {
+                $set: {
+                    updatedAt: new Date()
+                },
+                $unset: {
+                    sshSettings: ""
+                }
+            };
+            var options = {
+                multi: true
+            };
+            return waterline.nodes.runNativeMongo(
+                'update', [query, update, options]
+            );
         })
         .then(function () {
             waterline.stop();

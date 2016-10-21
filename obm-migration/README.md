@@ -1,5 +1,5 @@
 # rackhd-obm-migration
-Tool for migrating RackHD OBM settings from the Mongo nodes collection to the obms collection, used by the 2.0 OBM model
+Tool for migrating RackHD OBM and ssh settings from the Mongo nodes collection to the obms and ibms collections, used by the 2.0 OBM and IBM model
 
 ## Installation
 
