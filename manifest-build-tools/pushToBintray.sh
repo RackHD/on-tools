@@ -16,7 +16,7 @@ BINTRAY_API_KEY=$2
 BINTRAY_REPO=$3
 BINTRAY_PCK=$4
 BINTRAY_PCK_VERSION=$5
-PACKAGE=$6
+PACKAGE_PATH=$6
 
 main() {
   CURL="curl -u${BINTRAY_USER}:${BINTRAY_API_KEY} -H Content-Type:application/json -H Accept:application/json"
@@ -55,23 +55,22 @@ check_version_exists() {
 
 deploy_package() {
   if (upload_content); then
-    echo "Publishing ${PACKAGE}..."
-    echo "${CURL} -X POST ${API}/content/${BINTRAY_USER}/${BINTRAY_REPO}/${BINTRAY_PCK}/${BINTRAY_PCK_VERSION}/publish"
+    echo "Publishing ${PACKAGE_PATH}..."
     if [ $(${CURL} --write-out %{http_code} --silent --output /dev/null -X POST ${API}/content/${BINTRAY_USER}/${BINTRAY_REPO}/${BINTRAY_PCK}/${BINTRAY_PCK_VERSION}/publish) -eq "200" ]; then
-      echo "Package ${PACKAGE} published"
+      echo "Package ${PACKAGE_PATH} published"
     else
-      echo "[SEVERE] First you should upload your package ${PACKAGE}"
+      echo "Failed to publish your package ${PACKAGE_PATH}"
     fi
   fi
 }
 
 upload_content() {
-  echo "Uploading ${PACKAGE}..."
-  if [ $(${CURL} --write-out %{http_code} --silent --output /dev/null -H X-Bintray-Debian-Distribution:${DISTRIBUTION} -H X-Bintray-Debian-Component:${COMPONENT} -H X-Bintray-Debian-Architecture:${ARCHITECTURE} -H X-Bintray-Override:1 -T ${PACKAGE} ${API}/content/${BINTRAY_USER}/${BINTRAY_REPO}/${BINTRAY_PCK}/${BINTRAY_PCK_VERSION}/ ) -eq "201" ]; then
-      echo "Package ${PACKAGE} uploaded"
+  echo "Uploading ${PACKAGE_PATH}..."
+  if [ $(${CURL} --write-out %{http_code} --silent --output /dev/null -H X-Bintray-Debian-Distribution:${DISTRIBUTION} -H X-Bintray-Debian-Component:${COMPONENT} -H X-Bintray-Debian-Architecture:${ARCHITECTURE} -H X-Bintray-Override:1 -T ${PACKAGE_PATH} ${API}/content/${BINTRAY_USER}/${BINTRAY_REPO}/${BINTRAY_PCK}/${BINTRAY_PCK_VERSION}/ ) -eq "201" ]; then
+      echo "Package ${PACKAGE_PATH} uploaded"
       return 0
   else
-      echo "Failed to upload package ${PACKAGE}"
+      echo "Failed to upload package ${PACKAGE_PATH}"
       return 1
   fi
 }
