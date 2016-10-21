@@ -4,9 +4,12 @@
 
 set -e
 
-BINTRAY_CONFIG_FILE=bintray.conf
+BASEDIR=$(dirname "$0")
+
+BINTRAY_CONFIG_FILE=$BASEDIR/bintray.conf
+
 if [ ! -f "$BINTRAY_CONFIG_FILE" ]; then
-    echo "The bintray.conf is missing, exiting now..."
+    echo "The bintray.conf is missing. Exiting now..."
     exit 1
 fi
 
