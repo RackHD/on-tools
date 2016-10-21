@@ -3,6 +3,7 @@
 #Sample Usage: pushToBintray.sh username api_key bintray_repo bintray_package_name bintray_package_version local_package_path
 
 set -e
+set -x
 
 BASEDIR=$(dirname "$0")
 
@@ -38,7 +39,7 @@ main() {
 check_package_exists() {
   echo "Checking if package ${BINTRAY_PCK} exists..."
 
-  if [ $(${CURL} --write-out %{http_code} --silent --output /dev/null -X GET ${API}/packages/${BINTRAY_USER}/${BINTRAY_REPO}/${BINTRAY_PCK}) -eq "200" ]; then
+  if [ $(${CURL} --write-out %{http_code} --silent --output /dev/null -X GET ${API}/packages/${SUBJECT}/${BINTRAY_REPO}/${BINTRAY_PCK}) -eq "200" ]; then
       echo "package already exists"
       return 1
   else
@@ -48,7 +49,7 @@ check_package_exists() {
 
 check_version_exists() {
   echo "Checking if version ${BINTRAY_PCK_VERSION} exists..."
-  if [ $(${CURL} --write-out %{http_code} --silent --output /dev/null -X GET ${API}/packages/${BINTRAY_USER}/${BINTRAY_REPO}/${BINTRAY_PCK}/versions/${BINTRAY_PCK_VERSION}) -eq "200" ]; then
+  if [ $(${CURL} --write-out %{http_code} --silent --output /dev/null -X GET ${API}/packages/${SUBJECT}/${BINTRAY_REPO}/${BINTRAY_PCK}/versions/${BINTRAY_PCK_VERSION}) -eq "200" ]; then
       echo "version already exists"
       return 1
   else
@@ -59,7 +60,7 @@ check_version_exists() {
 deploy_package() {
   if (upload_content); then
     echo "Publishing ${PACKAGE_PATH}..."
-    if [ $(${CURL} --write-out %{http_code} --silent --output /dev/null -X POST ${API}/content/${BINTRAY_USER}/${BINTRAY_REPO}/${BINTRAY_PCK}/${BINTRAY_PCK_VERSION}/publish) -eq "200" ]; then
+    if [ $(${CURL} --write-out %{http_code} --silent --output /dev/null -X POST ${API}/content/${SUBJECT}/${BINTRAY_REPO}/${BINTRAY_PCK}/${BINTRAY_PCK_VERSION}/publish) -eq "200" ]; then
       echo "Package ${PACKAGE_PATH} published"
     else
       echo "Failed to publish your package ${PACKAGE_PATH}"
@@ -69,7 +70,7 @@ deploy_package() {
 
 upload_content() {
   echo "Uploading ${PACKAGE_PATH}..."
-  if [ $(${CURL} --write-out %{http_code} --silent --output /dev/null -H X-Bintray-Debian-Distribution:${DISTRIBUTION} -H X-Bintray-Debian-Component:${COMPONENT} -H X-Bintray-Debian-Architecture:${ARCHITECTURE} -H X-Bintray-Override:1 -T ${PACKAGE_PATH} ${API}/content/${BINTRAY_USER}/${BINTRAY_REPO}/${BINTRAY_PCK}/${BINTRAY_PCK_VERSION}/ ) -eq "201" ]; then
+  if [ $(${CURL} --write-out %{http_code} --silent --output /dev/null -H X-Bintray-Debian-Distribution:${DISTRIBUTION} -H X-Bintray-Debian-Component:${COMPONENT} -H X-Bintray-Debian-Architecture:${ARCHITECTURE} -H X-Bintray-Override:1 -T ${PACKAGE_PATH} ${API}/content/${SUBJECT}/${BINTRAY_REPO}/${BINTRAY_PCK}/${BINTRAY_PCK_VERSION}/ ) -eq "201" ]; then
       echo "Package ${PACKAGE_PATH} uploaded"
       return 0
   else
