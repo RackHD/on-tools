@@ -40,9 +40,11 @@ def get_setup_exe_name_version(srcdir):
 
     pver_id = setup_info.index('ProductVersion')
     pver = setup_info[pver_id + 1].strip(' ') # The OS version is next to 'ProductVersion' on the right
-    if pver == '6.3.9600.16384': # TODO: need add more map between the string and windows version
+    win2012_pver_pattern = '^6\.(.+)'
+    win2016_pver_pattern = '^10\.(.+)'
+    if re.search(win2012_pver_pattern, pver):
         osver = 'Windows2012'
-    elif pver == '10.0.14300.1000':
+    elif re.search(win2016_pver_pattern, pver):
         osver = 'Windows2016'
     return osname, osver
 
