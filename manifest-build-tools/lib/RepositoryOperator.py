@@ -11,6 +11,23 @@ class RepoCloner(ParallelTasks):
     """
     Do the actual work of checking out a git repository to the specifications
     given in the manifest file.
+    Usage:
+    cloner = RepoCloner(integer)
+    # the cloner could add reveral tasks 
+    cloner.add_task(data)
+    # data should contain:
+      'repo': {
+              "repository": "https://github.com/RackHD/on-tools.git",  ##required
+              "commit-id": xxx,                                        ##optional
+              "branch": xxx                                            ##optional
+      },
+      'builddir': dest_dir,   # the location to check out the repository into
+      'credentials': git_credential  # a list of Git credentials in URL:VARIABLE_NAME format
+
+    # run tasks in parallel
+    cloner.finish()
+    # get the result of tasks
+    results = cloner.get_results()
     """
     def add_task(self, data, name=None):
         """
