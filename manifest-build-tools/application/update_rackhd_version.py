@@ -173,25 +173,9 @@ class UpdateRackhdVersion(object):
         """
         try:
             rackhd_dir = self._get_repo_dir("RackHD")
-            version_generator = VersionGenerator(rackhd_dir)
-            # Generate the big version like:1.1.1
-            big_version = version_generator.generate_big_version()
-            if big_version is None:
-                print "Failed to generate big version for {0}".format(rackhd_dir)
-                sys.exit(1)
-            if self._is_official_release:
-                return big_version
-            else:
-                # Generate the candidate version like: devel or rc
-                candidate_version = version_generator.generate_candidate_version()
-                # Generate small version like: 20161009123456-abcd123 
-                small_version_generator = VersionGenerator(self._manifest_repo_dir)
-                small_version = small_version_generator.generate_small_version()
-                if big_version is None or candidate_version is None or small_version is None:
-                    print "Failed to generate version for RackHD, Exiting now..."
-                    sys.exit(1)
-                version = "{0}~{1}-{2}".format(big_version, candidate_version, small_version)
-                return version
+            version_generator = VersionGenerator(rackhd_dir, self._manifest_repo_dir)
+            version = version_generator.generate_package_version(self._is_official_release)
+            return version
         except Exception,e:
             print "Failed to generate RackHD version due to {0} \n Exiting now...".format(e)
             sys.exit(1) 
@@ -275,7 +259,7 @@ class UpdateRackhdVersion(object):
             else:
                 repo_dir = self.manifest_actions.directory_for_repo(repo)
 
-            version_generator = VersionGenerator(repo_dir)
+            version_generator = VersionGenerator(repo_dir, self._manifest_repo_dir)
             version = version_generator.generate_package_version(self._is_official_release)
             if version != None:
                 if 'repository' in repo:
@@ -283,10 +267,6 @@ class UpdateRackhdVersion(object):
                     repo_name = strip_suffix(os.path.basename(repo_url), ".git")
                     version_dict[repo_name] = version
 
-        if "on-http" in version_dict:
-            version_dict["python-on-http-redfish-1.0"] = version_dict["on-http"]
-            version_dict["python-on-http-api1.1"] = version_dict["on-http"]
-            version_dict["python-on-http-api2.0"] = version_dict["on-http"]
         return version_dict
 
     def update_RackHD_control(self):
