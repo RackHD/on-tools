@@ -8,7 +8,17 @@ The script compute the version of a package, just like:
 usage:
 ./on-tools/manifest-build-tools/HWIMO-BUILD on-tools/manifest-build-tools/application/version_generator.py 
 --repo-dir /home/onrack/rackhd/release/rackhd-repos/PengTian0/b/b/on-http
+--manifest-repo-dir /home/onrack/rackhd/release/rackhd-repos/PengTian0/b/build-manifests
+--is-official-release
+--parameter-file version.txt
 
+The required parameters: 
+repo-dir
+manifest-repo-dir
+
+The optional parameters:
+is-official-release (default value is false)
+parameter-file (default value is release_version)
 """
 import os
 import sys
@@ -19,12 +29,13 @@ from RepositoryOperator import RepoOperator
 from common import *
 
 class VersionGenerator(object):
-    def __init__(self, repo_dir):
+    def __init__(self, repo_dir, manifest_repo_dir):
         """
         :return:
  
         """
         self._repo_dir = repo_dir
+        self._manifest_repo_dir = manifest_repo_dir
         self.repo_operator = RepoOperator()
  
     def generate_small_version(self):
@@ -33,11 +44,11 @@ class VersionGenerator(object):
         return: small version 
         """
 
-        ts_str = self.repo_operator.get_lastest_commit_date(self._repo_dir)
+        ts_str = self.repo_operator.get_lastest_commit_date(self._manifest_repo_dir)
         date = datetime.datetime.utcfromtimestamp(int(ts_str)).strftime('%Y%m%d%H%M%SZ')
-        commit_id = self.repo_operator.get_lastest_commit_id(self._repo_dir)
+        commit_id = self.repo_operator.get_lastest_commit_id(self._manifest_repo_dir)
         version = "{date}-{commit}".format(date=date, commit=commit_id[0:7])
-        return version              
+        return version
 
     def generate_big_version(self):
         """
@@ -88,7 +99,6 @@ class VersionGenerator(object):
             candidate_version = "rc"
         return candidate_version
         
-
     def generate_package_version(self, is_official_release):
         """
         generate the version of package, just like:
@@ -123,6 +133,11 @@ def parse_command_line(args):
                         required=True,
                         help="the directory of repository",
                         action="store")
+    parser.add_argument("--manifest-repo-dir",
+                        required=True,
+                        help="the directory of manifest repository",
+                        action="store")
+
     parser.add_argument("--is-official-release",
                         default=False,
                         help="This release if official",
@@ -130,7 +145,7 @@ def parse_command_line(args):
     parser.add_argument('--parameter-file',
                         help="The jenkins parameter file that will used for succeeding Jenkins job",
                         action='store',
-                        default="downstream_parameters")
+                        default="release_version")
 
     parsed_args = parser.parse_args(args)
     return parsed_args
@@ -165,7 +180,7 @@ def main():
     # parse arguments
     args = parse_command_line(sys.argv[1:])
 
-    generator = VersionGenerator(args.repo_dir)
+    generator = VersionGenerator(args.repo_dir, args.manifest_repo_dir)
     try:
         version = generator.generate_package_version(args.is_official_release)
 
