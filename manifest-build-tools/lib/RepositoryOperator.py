@@ -13,7 +13,7 @@ class RepoCloner(ParallelTasks):
     given in the manifest file.
     Usage:
     cloner = RepoCloner(integer)
-    # the cloner could add reveral tasks 
+    # the cloner could add several tasks 
     cloner.add_task(data)
     # data should contain:
       'repo': {
