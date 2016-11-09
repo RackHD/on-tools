@@ -5,7 +5,7 @@
 # pushToBintray.sh \
 # --user username \
 # --api_key api_key \
-# --subject subject \
+# --subject subject \                   
 # --repo bintray_repo \
 # --package bintray_package_name \
 # --version bintray_package_version \
@@ -15,11 +15,19 @@
 # --architecture "amd64,i386"
 #
 # The parameters are required:
-# user, api_key, subject, repo, package, version, file_path,
+# user:  the Bintray user name
+# api_key: the Bintray api key with privilege being able to upload packages to target "subject"
+# subject: the Bintray subject, which is either a user or an organization
+# repo: the Bintary repository name
+# package: the Bintray package name
+# version: the Bintray version
+# file_path: the local file path which is going to be uploaded
+#
 # Below parameters are optional:
-# component (default: main)
+# component (default: main)          
 # distribution (default: trusty)
 # architecture (default: amd64)
+# The 3 parameters are the attibutes of debian package used to identify the apt-get source
 ############################################
 
 set -e
