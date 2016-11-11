@@ -74,7 +74,15 @@ class VersionGenerator(object):
             (out, err) = proc.communicate()
             if proc.returncode != 0:
                 raise RuntimeError("Failed to sync on-http/debianstatic/on-http to on-http/debian due to {0}".format(err))
-                
+ 
+        debian_exist = False
+        if os.path.isdir(self._repo_dir):
+            for filename in os.listdir(self._repo_dir):
+                if filename == "debian":
+                    debian_exist = True
+        if debian_exist == False:
+            return None
+               
         cmd_args = ["dpkg-parsechangelog", "--show-field", "Version"]
         proc = subprocess.Popen(cmd_args,
                                 cwd=self._repo_dir,
@@ -86,9 +94,7 @@ class VersionGenerator(object):
         if proc.returncode == 0:
             return out.strip()
         else:
-            print "Failed to parse version in debian/changelog due to {0}".format(err)
-            return None
-
+            raise RuntimeError("Failed to parse version in debian/changelog due to {0}".format(err))
         
     def generate_version_stage(self):
         """
