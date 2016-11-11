@@ -40,7 +40,8 @@ class VersionGenerator(object):
  
     def generate_small_version(self):
         """
-        generate the small version which consists of commit date and commit hash
+        Generate the small version which consists of commit date and commit hash of manifest repository
+        According to small version, users can track the commit of all repositories in manifest file
         return: small version 
         """
 
@@ -52,7 +53,8 @@ class VersionGenerator(object):
 
     def generate_big_version(self):
         """
-        generate the big version according to changelog
+        Generate the big version according to changelog
+        The big version is the latest version of debian/changelog
         return: big version
         """
         #If the repository is on-http, sync the debianstatic/on-http/ to debian before compute version
@@ -85,19 +87,19 @@ class VersionGenerator(object):
             return None
 
         
-    def generate_candidate_version(self):
+    def generate_version_stage(self):
         """
-        generate the candidate version according to branch
+        Generate the version stage according to the stage of deveplopment
         return: devel ,if the branch is master
                 rc, if the branch is not master
         """
         current_branch = self.repo_operator.get_current_branch(self._repo_dir)
-        candidate_version = ""
+        version_stage = ""
         if "master" in current_branch:
-            candidate_version = "devel"
+            version_stage = "devel"
         else:
-            candidate_version = "rc"
-        return candidate_version
+            version_stage = "rc"
+        return version_stage
         
     def generate_package_version(self, is_official_release):
         """
@@ -113,13 +115,13 @@ class VersionGenerator(object):
         if is_official_release:
             version = big_version
         else:
-            candidate_version = self.generate_candidate_version()
+            version_stage = self.generate_version_stage()
             small_version = self.generate_small_version()
 
-            if candidate_version is None or small_version is None:
+            if version_stage is None or small_version is None:
                 raise RuntimeError("Failed to generate version for {0}, due to the candidate version or small version is None".format(self._repo_dir))
 
-            version = "{0}~{1}-{2}".format(big_version, candidate_version, small_version)
+            version = "{0}~{1}-{2}".format(big_version, version_stage, small_version)
         
         return version
 
@@ -143,7 +145,7 @@ def parse_command_line(args):
                         help="This release if official",
                         action="store_true")
     parser.add_argument('--parameter-file',
-                        help="The jenkins parameter file that will used for succeeding Jenkins job",
+                        help="The jenkins parameter file that will be used for succeeding Jenkins job",
                         action='store',
                         default="release_version")
 
