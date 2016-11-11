@@ -83,9 +83,6 @@ class UpdateRackhdVersion(object):
         :return: None
         """
         control = os.path.join(debian_dir, "control")
-        print "1111111111111111111"
-        print control
-        print version_dict
         if not os.path.isfile(control):
             raise RuntimeError("Can't update dependency of {0} because it is not a file".format(control))
 
