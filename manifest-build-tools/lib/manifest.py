@@ -22,7 +22,6 @@ class Manifest(object):
         __file_path - The file path of the manifest file
         __name - The file name of the manifest file
         __manifest -The content of the manifest file
-        __changed - If manifest is changed, be True; The default value is False
         __git_credentials  - URL, credentials pair for the access to github repos
         gitbit - Class instance of gitbit
         """
@@ -34,7 +33,6 @@ class Manifest(object):
         self._file_path = file_path
         self._name = file_path.split('/')[-1]
         self._manifest = None
-        self._changed = False
 
         self._git_credentials = None
         self.gitbit = GitBit(verbose=True)
@@ -70,9 +68,6 @@ class Manifest(object):
 
     def get_build_requirements(self):
         return self._build_requirements
-
-    def get_changed(self):
-        return self._changed
 
 
     def setup_gitbit(self):
@@ -159,7 +154,6 @@ class Manifest(object):
         """
         result = True
         message = []
-        #for job in self._manifest['downstream-jobs']:
         for job in downstream_jobs:
             valid = True
             # repository url is required
