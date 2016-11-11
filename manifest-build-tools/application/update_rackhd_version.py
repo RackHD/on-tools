@@ -9,7 +9,10 @@ usage:
                      
 The required parameters:
 manifest-repo-dir: The directory of manifest repository
-builddir: The destination for repositories stored.
+
+builddir: The destination for repositories in manifest stored.
+          Repositories under the directory include on-xxx and RackHD
+
 git-credential: url, credentials pair for the access to github repos
 
 The optional parameter:
@@ -28,9 +31,12 @@ from common import *
 import deb822
 import subprocess
 
-class UpdateRackhdVersion(object):
+class RackhdDebianControlUpdater(object):
     def __init__(self, manifest_dir, builddir):
         """
+        Compute the version of each repository under builddir
+        and update the debian/control with these versions
+
         __git_credential - url, credentials pair for the access to github repos
         __manifest_repo_dir - The directory of Repository manifest
         __builddir - Destination for checked out repositories
@@ -187,7 +193,7 @@ def main():
     args = parse_command_line(sys.argv[1:])
 
     # Start to initial an instance of UpdateRackhdVersion
-    updater = UpdateRackhdVersion(args.manifest_repo_dir, args.builddir)
+    updater = RackhdDebianControlUpdater(args.manifest_repo_dir, args.builddir)
 
     if args.is_official_release:
         updater.set_is_official_release(args.is_official_release)
