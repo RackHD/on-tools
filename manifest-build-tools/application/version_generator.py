@@ -12,6 +12,9 @@ usage:
 --is-official-release
 --parameter-file version.txt
 
+Because this script need to import scripts under lib.
+The script HWIMO-BUILD helps to add the scripts under lib to python path.
+
 The required parameters: 
 repo-dir
 manifest-repo-dir
