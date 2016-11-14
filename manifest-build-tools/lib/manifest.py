@@ -66,21 +66,27 @@ class Manifest(object):
     def get_build_name(self):
         return self._build_name
 
+    def set_build_name(self, build_name):
+        self._manifest['build-name'] = build_name
+        self._build_name = build_name
+        
     def get_build_requirements(self):
         return self._build_requirements
 
+    def set_build_requirements(self, requirements):
+        self._manifest['build-requirements'] = requirements
+        self._build_requirements = requirements
 
     def setup_gitbit(self):
         """
         Set gitbit credentials.
-        :return:
+        :return: None
         """
         self.gitbit.set_identity(config.gitbit_identity['username'], config.gitbit_identity['email'])
         if self._git_credentials:
             for url_cred_pair in self._git_credentials:
                 url, cred = url_cred_pair.split(',')
                 self.gitbit.add_credential_from_variable(url, cred)
-
 
     def read_manifest_file(self, filename):
         """
@@ -97,8 +103,8 @@ class Manifest(object):
     def parse_manifest(self):
         """
         parse manifest and assign properties
+        :return: None
         """
-
         if 'build-name' in self._manifest:
             self._build_name = self._manifest['build-name']
   
@@ -112,7 +118,6 @@ class Manifest(object):
         if 'downstream-jobs' in self._manifest:
             for job in self._manifest['downstream-jobs']:
                 self._downstream_jobs.append(job)
-
 
     @staticmethod
     def validate_repositories(repositories):
@@ -201,47 +206,45 @@ class Manifest(object):
         """
         Identify whether the manifest contains useful information (as we understand it)
         raise error if manifest is unusable
-        :return:
+        :return: None
         """
 
         result = True
-        message = ["Validate manifest file: {0}".format(self._name)]
+        messages = ["Validate manifest file: {0}".format(self._name)]
         if self._manifest is None:
             result = False
-            message.append("No manifest contents")
+            messages.append("No manifest contents")
 
         #build-name is required
         if 'build-name' not in self._manifest:
             result = False
-            message.append("No build-name in manifest file")
+            messages.append("No build-name in manifest file")
 
         #repositories is required
         if 'repositories' not in self._manifest:
             result = False
-            message.append("No repositories in manifest file")
+            messages.append("No repositories in manifest file")
         else:
             r, m = self.validate_repositories(self._repositories)
             if not r:
                 result = False
-                message.extend(m)
+                messages.extend(m)
         #downstream-jobs is required
         if 'downstream-jobs' not in self._manifest:
             result = False
-            message.append("No downstream-jobs in manifest file")
+            messages.append("No downstream-jobs in manifest file")
         else:
-            r, m = self.validate_downstream_jobs(self._downstream_jobs)
+            r, m = Manifest.validate_downstream_jobs(self._downstream_jobs)
             if not r:
                 result = False
-                message.extend(m)
+                messages.extend(m)
         #build-requirements is required
         if 'build-requirements' not in self._manifest:
             result = False
-            message.append("No build-requirements in manifest file")
+            messages.append("No build-requirements in manifest file")
         
         if not result:
-            message.append("manifest file {0} is not valid".format(self._name))
+            messages.append("manifest file {0} is not valid".format(self._name))
             error = '\n'.join(message)
             raise KeyError(error)
-
-
 
