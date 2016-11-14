@@ -40,9 +40,11 @@ def get_setup_exe_name_version(srcdir):
 
     pver_id = setup_info.index('ProductVersion')
     pver = setup_info[pver_id + 1].strip(' ') # The OS version is next to 'ProductVersion' on the right
-    if pver == '6.3.9600.16384': # TODO: need add more map between the string and windows version
+    win2012_pver_pattern = '^6\.(.+)'
+    win2016_pver_pattern = '^10\.(.+)'
+    if re.search(win2012_pver_pattern, pver):
         osver = 'Windows2012'
-    elif pver == '10.0.14300.1000':
+    elif re.search(win2016_pver_pattern, pver):
         osver = 'Windows2016'
     return osname, osver
 
@@ -76,6 +78,11 @@ def do_setup_repo(osname, osver, src, dest, link):
         os.system(syscall)
 
         shutil.copyfile(src+'/isolinux/'+vmlinuz, dstpath+'/'+vmlinuz)
+    elif osname == 'Ubuntu':
+        p = subprocess.Popen(['ls', src], stdout=subprocess.PIPE)
+        filenames = p.stdout.read().split('\n')
+        ignoreList=[f for f in filenames if f == 'ubuntu' or f == '']
+        shutil.copytree(src, dstpath, ignore=shutil.ignore_patterns(*ignoreList))
     else:
         shutil.copytree(src, dstpath)
 
@@ -121,10 +128,6 @@ def determine_os_ver(srcdir, iso_info):
         elif "RPM-GPG-KEY-CentOS-Testing-7" in src_dir_list:
             osname = "Centos"
             osver = '7.0'
-        elif 'isolinux' in src_dir_list:
-            print 'attempting LiveCD netboot'
-            osname = 'LiveCD'
-            osver = vid
         elif 'ubuntu' in src_dir_list:
             # For ubuntu, the osver is combined by the version name(add -server for unbuntu server and without -server
             # for desktop) and version number, e.g.ubuntu-server-16.04
@@ -135,6 +138,11 @@ def determine_os_ver(srcdir, iso_info):
             assert m.group(1), "The version name(e.g., unbuntu-server) for ubuntu is not correct"
             assert m.group(2), "The version for ubuntu is not correct"
             osver = m.group(1) + '-' + m.group(2)
+        elif 'isolinux' in src_dir_list:
+            print 'attempting LiveCD netboot'
+            osname = 'LiveCD'
+            osver = vid
+
         elif 'suse' in src_dir_list:
             osname='SUSE'
             if vid == '': assert ValueError, "The volume ID is not get correctly"
