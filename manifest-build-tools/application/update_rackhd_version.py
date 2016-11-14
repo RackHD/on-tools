@@ -4,18 +4,20 @@
 usage:
 ./on-tools/manifest-build-tools/HWIMO-BUILD on-tools/manifest-build-tools/application/update_rackhd_version.py \
 --manifest-repo-dir build-manifests \
+--manifest-name rackhd-devel \
 --builddir b \
+--force \
 --git-credential https://github.com/PengTian0,GITHUB \
                      
 The required parameters:
-manifest-repo-dir: The directory of manifest repository
-
+manifest-repo-dir: The directory of manifest repository.
+manifest-name: The name of manifest file.
 builddir: The destination for repositories in manifest stored.
           Repositories under the directory include on-xxx and RackHD
-
 git-credential: url, credentials pair for the access to github repos
 
 The optional parameter:
+force: Overwrite the build directory if it exists.
 is-official-release: if true, this release is official, the default value is false
 
 """
@@ -41,7 +43,7 @@ class RackhdDebianControlUpdater(object):
         __manifest_repo_dir - The directory of Repository manifest
         __builddir - Destination for checked out repositories
         __is_official_release - True if the official is official release
-        :return:
+        :return: None
         """
         self._git_credentials = None
         self._builddir = builddir
@@ -158,7 +160,7 @@ class RackhdDebianControlUpdater(object):
             print "Failed to update RackHD/debian/control due to {0}".format(e)
             sys.exit(1)
 
-        
+   
 def parse_command_line(args):
     """
     Parse script arguments.
@@ -167,13 +169,21 @@ def parse_command_line(args):
     parser = argparse.ArgumentParser()
     parser.add_argument("--manifest-repo-dir",
                         required=True,
-                        help="the url of repository manifest",
+                        help="the path of manifest repository",
+                        action="store")
+    parser.add_argument("--manifest-name",
+                        required=True,
+                        help="the name of manifest file",
                         action="store")
     
     parser.add_argument("--builddir",
                         required=True,
                         help="destination for checked out repositories",
                         action="store")
+
+    parser.add_argument("--force",
+                        help="use destination dir, even if it exists",
+                        action="store_true")
 
     parser.add_argument("--git-credential",
                         required=True,
@@ -191,6 +201,16 @@ def parse_command_line(args):
 def main():
     # Parse arguments
     args = parse_command_line(sys.argv[1:])
+
+    # Checkout repositories according to manifest file
+    manifest_file = os.path.join(args.manifest_repo_dir, args.manifest_name)
+    manifest_actions = ManifestActions(manifest_file, args.builddir)
+    manifest_actions.set_git_credentials(args.git_credential)
+    manifest_actions.set_jobs(8)
+    if args.force:
+        manifest_actions.set_force(args.force)
+    manifest_actions.check_builddir()
+    manifest_actions.get_repositories()
 
     # Start to initial an instance of UpdateRackhdVersion
     updater = RackhdDebianControlUpdater(args.manifest_repo_dir, args.builddir)
