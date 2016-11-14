@@ -5,12 +5,12 @@
 The script generate a new manifest for a new branch according to another manifest
 
 usage:
-./on-tools/manifest-build-tools/HWIMO-BUILD on-tools/manifest-build-tools/application/manifest_generator.py 
---source-manifest build-manifest/rackhd-devel
---dest-manifest build-manifest/rackhd-release-1.2.5
---branch branch/release-1.2.5
---force
---publish
+./on-tools/manifest-build-tools/HWIMO-BUILD on-tools/manifest-build-tools/application/manifest_generator.py \
+--source-manifest build-manifest/rackhd-devel \
+--dest-manifest build-manifest/rackhd-release-1.2.5 \
+--branch branch/release-1.2.5 \
+--force \
+--publish \
 --git-credential https://github.com,GITHUB
 
 The required parameters: 
@@ -37,8 +37,13 @@ from manifest import Manifest
 class ManifestGenerator(object):
     def __init__(self, source, dest, branch):
         """
-        :return:
- 
+        Generate a new manifest for new branch according to a source manifest file.
+
+        __source_manifest_file: the path of source manifest
+        __dest_manifest_file: the path of new manifest
+        __new_branch: the new branch name
+        __force: overwrite the destination manifest file if it exists.
+        :return: None
         """
         self._source_manifest_file = source
         self._dest_manifest_file = dest
@@ -66,6 +71,7 @@ class ManifestGenerator(object):
     def update_manifest(self):
         """
         update the manifest with new branch
+        :return: None
         """
         repositories = self._manifest.get_repositories()
         downstream_jobs = self._manifest.get_downstream_jobs()
@@ -84,6 +90,7 @@ class ManifestGenerator(object):
     def generate_manifest(self):
         """
         generate a new manifest
+        :return: None
         """
         dest_dir = os.path.dirname(self._dest_manifest_file)
         dest_file = os.path.basename(self._dest_manifest_file)
