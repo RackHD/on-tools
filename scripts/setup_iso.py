@@ -13,6 +13,7 @@ import sys
 import shutil
 import re
 import urllib
+import time
 
 tmpdir = ''
 verbose=1
@@ -21,13 +22,31 @@ verbose=1
 @atexit.register
 def cleanup_tmp():
     if tmpdir != '':
-        subprocess.check_call(['umount', tmpdir])
+        subprocess.check_call(['umount', '-l', tmpdir])
         os.rmdir(tmpdir)
 
 def get_iso_info(fname):
     # Access ISO to determine OS type from supported list
     label1=subprocess.Popen(['isoinfo', '-i', fname, '-d'], stdout=subprocess.PIPE)
     return label1.stdout.read()
+
+def get_setup_exe_name_version(srcdir):
+    # To get the name and version from setup.exe
+    os.chdir(srcdir)
+    label1=subprocess.Popen(['strings', '-e', 'l', 'setup.exe'], stdout=subprocess.PIPE)
+    setup_info =  label1.stdout.read().split('\n')
+    osname_id = setup_info.index(' Operating System') # The os name is next to 'Operating System' on the left
+    osname = setup_info[osname_id - 1].strip(' ')
+
+    pver_id = setup_info.index('ProductVersion')
+    pver = setup_info[pver_id + 1].strip(' ') # The OS version is next to 'ProductVersion' on the right
+    win2012_pver_pattern = '^6\.(.+)'
+    win2016_pver_pattern = '^10\.(.+)'
+    if re.search(win2012_pver_pattern, pver):
+        osver = 'Windows2012'
+    elif re.search(win2016_pver_pattern, pver):
+        osver = 'Windows2016'
+    return osname, osver
 
 def do_setup_repo(osname, osver, src, dest, link):
     print 'Installing {0} {1} to {2}/{0}/{1}'.format(osname, osver, dest)
@@ -36,12 +55,6 @@ def do_setup_repo(osname, osver, src, dest, link):
     if os.path.isdir(dstpath):
         print 'Found existing directory, bailing...'
         sys.exit(1)
-
-    if osname is 'ESXi':
-        shutil.copytree(src, dstpath)
-
-    if osname is 'RHEL' or osname is 'Centos':
-        shutil.copytree(src, dstpath)
 
     if osname is 'LiveCD':
         initrd='initrd.img'
@@ -65,7 +78,8 @@ def do_setup_repo(osname, osver, src, dest, link):
         os.system(syscall)
 
         shutil.copyfile(src+'/isolinux/'+vmlinuz, dstpath+'/'+vmlinuz)
-
+    else:
+        shutil.copytree(src, dstpath)
 
     os.system('ln -sf ' + dest + "/" + osname + ' ' + link + '/on-http/static/http/')
     os.system('ln -sf ' + dest + "/" + osname + ' ' + link + '/on-tftp/static/tftp/')
@@ -102,17 +116,44 @@ def determine_os_ver(srcdir, iso_info):
         elif 'ESXI-5.5' in vid:
             osver='5.5'
     else:
-        list=os.listdir(srcdir)
-        if "RPM-GPG-KEY-redhat-release" in list:
+        src_dir_list=os.listdir(srcdir)
+        if "RPM-GPG-KEY-redhat-release" in src_dir_list:
             osname = 'RHEL'
             osver = '7.0'
-        elif "RPM-GPG-KEY-CentOS-Testing-7" in list:
+        elif "RPM-GPG-KEY-CentOS-Testing-7" in src_dir_list:
             osname = "Centos"
             osver = '7.0'
-        elif 'LiveOS' and 'isolinux' in list:
+        elif 'isolinux' in src_dir_list:
             print 'attempting LiveCD netboot'
             osname = 'LiveCD'
             osver = vid
+        elif 'ubuntu' in src_dir_list:
+            # For ubuntu, the osver is combined by the version name(add -server for unbuntu server and without -server
+            # for desktop) and version number, e.g.ubuntu-server-16.04
+            osname='Ubuntu'
+            if vid == '': assert ValueError, "The volume ID is not get correctly"
+            ver_pattern = '(\w+\-?\w+)\s+(\d+\.?\d+\.?\d+?)'
+            m = re.search(ver_pattern, vid)
+            assert m.group(1), "The version name(e.g., unbuntu-server) for ubuntu is not correct"
+            assert m.group(2), "The version for ubuntu is not correct"
+            osver = m.group(1) + '-' + m.group(2)
+        elif 'suse' in src_dir_list:
+            osname='SUSE'
+            if vid == '': assert ValueError, "The volume ID is not get correctly"
+            ver_pattern = '(.+)-DVD-(.+)'
+            m = re.search(ver_pattern, vid)
+            assert m.group(1), "The version name is not retrieved correctly"
+            osver = m.group(1)
+        elif 'setup.exe' in src_dir_list:
+            osname, osver = get_setup_exe_name_version(srcdir)
+        else:
+             for i in src_dir_list:
+                 if "PHOTON" in i:
+                     osname="PHOTON"
+                     if vid == '': assert ValueError, "The volume ID is not get correctly"
+                     osver = vid.lstrip('PHOTON_')
+
+
     return osname, osver
 
 def show_progress(a,b,file_size):
@@ -154,3 +195,4 @@ if not osname or not osver:
     sys.exit(1)
 
 do_setup_repo(osname, osver, tmpdir, args.dest, args.link)
+

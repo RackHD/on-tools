@@ -1,0 +1,12 @@
+{
+  "name": "obmMigration",
+  "version": "0.0.0",
+  "description": "OBM settings migration script",
+  "main": "obmMigration.js",
+  "author": "",
+  "dependencies": {
+    "di": "git+https://github.com/RackHD/di.js.git",
+    "lodash": "^3.10.1",
+    "on-core": "git+https://github.com/srinia6/on-core.git"
+  }
+}

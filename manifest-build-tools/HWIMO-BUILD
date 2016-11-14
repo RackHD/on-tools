@@ -1,0 +1,59 @@
+#!/bin/bash
+#
+# HWIMO-BUILD
+#
+# Sets up the virtual environment for the scripts in question
+# Runs the specified command, passing down all command line arguments
+#
+
+# Specify full error checking
+set -e
+
+function cleanup {
+  set +e
+  trap '' EXIT SIGINT
+
+  echo "Cleaning up ${TMPDIR}"
+  if [ -n "${TMPDIR}" ]
+  then
+    rm -r ${TMPDIR}
+  fi
+}
+
+trap cleanup SIGINT EXIT
+
+BASEDIR=$(dirname "$0")
+
+# Create a virtual environment to use for the
+# packaging, testing and document generation.
+# We need to disable "set -e" here.  sourcing
+# virtualenv files causes early exits
+
+if [ ! -d $BASEDIR/env/hwimobuild -o $BASEDIR/requirements.txt -nt $BASEDIR/env/hwimobuild ]
+then
+  echo -n "Creating virtual environment... "
+  set +e
+  (cd $BASEDIR; ./mkenv.sh hwimobuild) > $BASEDIR/environment.log 2>&1
+  if [ $? != 0 ]
+  then
+    echo "found problems:"
+    if [ -f $BASEDIR/environment.log ]
+    then
+      cat $BASEDIR/environment.log
+    else
+      echo "No log file available"
+    fi
+    exit 1
+  fi
+  echo 'done!'
+fi
+
+source $BASEDIR/env/hwimobuild/bin/activate
+set -e
+
+if [ -d $BASEDIR/lib ]
+then
+  export PYTHONPATH="$(cd $BASEDIR/lib; pwd)"
+fi
+
+exec "$@"
