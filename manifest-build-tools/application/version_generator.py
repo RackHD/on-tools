@@ -124,7 +124,7 @@ class VersionGenerator(object):
         """
         big_version = self.generate_big_version()
         if big_version is None:
-            print "Failed to generate big version, maybe the {0} doesn't contain debian directory".format(self._repo_dir)
+            logging.warning("Failed to generate big version, maybe the {0} doesn't contain debian directory".format(self._repo_dir))
             return None
 
         if is_official_release:
@@ -159,39 +159,16 @@ def parse_command_line(args):
                         default=False,
                         help="This release if official",
                         action="store_true")
+
+    """
     parser.add_argument('--parameter-file',
                         help="The jenkins parameter file that will be used for succeeding Jenkins job",
                         action='store',
                         default="release_version")
+    """
 
     parsed_args = parser.parse_args(args)
     return parsed_args
-
-
-def write_downstream_parameters(filename, params):
-    """
-    Add/append downstream parameter (java variable value pair) to the given
-    parameter file. If the file does not exist, then create the file.
-
-    :param filename: The parameter file that will be used for making environment
-     variable for downstream job.
-    :param params: the parameters dictionary
-
-    :return:
-            None on success
-            Raise any error if there is any
-    """
-    if filename is None:
-        return
-
-    with open(filename, 'w') as fp:
-        try:
-            for key in params:
-                entry = "{key}={value}\n".format(key=key, value=params[key])
-                fp.write(entry)
-        except IOError:
-            print "Unable to write parameter(s) for next step(s), exit"
-            exit(2)
 
 def main():
     # parse arguments
@@ -200,12 +177,9 @@ def main():
     generator = VersionGenerator(args.repo_dir, args.manifest_repo_dir)
     try:
         version = generator.generate_package_version(args.is_official_release)
-        # write parameters to parameter file
-        downstream_parameters = {}
-        downstream_parameters['PKG_VERSION'] = version
-        write_downstream_parameters(args.parameter_file, downstream_parameters)
+        print version
     except Exception, e:
-        print "Failed to generate version for {0} due to {1}\n Exiting now".format(args.repo_dir, e)
+        logging.error("Failed to generate version for {0} due to {1}\n Exiting now".format(args.repo_dir, e))
         sys.exit(1)
 
 if __name__ == "__main__":

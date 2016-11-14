@@ -1,6 +1,10 @@
 # Copyright 2016, EMC, Inc.
 
 import subprocess
+import logging
+
+log_file = 'manifest-build-tools.log'
+logging.basicConfig(format='%(asctime)s %(levelname)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p', filename=log_file, filemode='w', level=logging.DEBUG)
 
 def strip_suffix(text, suffix):
     """
