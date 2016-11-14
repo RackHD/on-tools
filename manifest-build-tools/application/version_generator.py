@@ -34,8 +34,12 @@ from common import *
 class VersionGenerator(object):
     def __init__(self, repo_dir, manifest_repo_dir):
         """
-        :return:
- 
+        This module compute the version of a repository
+        The version for candidate release: {big-version}~{version-stage}-{small-version}
+        The big version is parsed from debian/changelog
+        The version-stage is devel if branch is master; or rc if branch if not master
+        The samll version is consist of the commit hash and commit date of manifest repository
+        :return:None
         """
         self._repo_dir = repo_dir
         self._manifest_repo_dir = manifest_repo_dir
@@ -54,6 +58,18 @@ class VersionGenerator(object):
         version = "{date}-{commit}".format(date=date, commit=commit_id[0:7])
         return version
 
+    def debian_exist(self):
+        """
+        check whether debian or debianstatic directory under the repository
+        return: True if debian or debianstatic exist
+                False
+        """
+        if os.path.isdir(self._repo_dir):
+            for filename in os.listdir(self._repo_dir):
+                if filename == "debian":
+                    return True
+        return False
+
     def generate_big_version(self):
         """
         Generate the big version according to changelog
@@ -64,23 +80,9 @@ class VersionGenerator(object):
         repo_url = self.repo_operator.get_repo_url(self._repo_dir)
         repo_name = strip_suffix(os.path.basename(repo_url), ".git")
         if repo_name == "on-http":
-            cmd_args = ["rsync", "-ar", "debianstatic/on-http/", "debian"]
-            proc = subprocess.Popen(cmd_args,
-                                    cwd=self._repo_dir,
-                                    stderr=subprocess.PIPE,
-                                    stdout=subprocess.PIPE,
-                                    shell=False)
+            link_dir("debianstatic/on-http/", "debian", self._repo_dir)
 
-            (out, err) = proc.communicate()
-            if proc.returncode != 0:
-                raise RuntimeError("Failed to sync on-http/debianstatic/on-http to on-http/debian due to {0}".format(err))
- 
-        debian_exist = False
-        if os.path.isdir(self._repo_dir):
-            for filename in os.listdir(self._repo_dir):
-                if filename == "debian":
-                    debian_exist = True
-        if debian_exist == False:
+        if not self.debian_exist():
             return None
                
         cmd_args = ["dpkg-parsechangelog", "--show-field", "Version"]
@@ -91,6 +93,10 @@ class VersionGenerator(object):
                                 shell=False)
 
         (out, err) = proc.communicate()
+
+        if repo_name == "on-http":
+            os.remove(os.path.join(self._repo_dir, "debian"))
+
         if proc.returncode == 0:
             return out.strip()
         else:
@@ -194,7 +200,6 @@ def main():
     generator = VersionGenerator(args.repo_dir, args.manifest_repo_dir)
     try:
         version = generator.generate_package_version(args.is_official_release)
-
         # write parameters to parameter file
         downstream_parameters = {}
         downstream_parameters['PKG_VERSION'] = version

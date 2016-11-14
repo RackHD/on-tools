@@ -1,5 +1,7 @@
 # Copyright 2016, EMC, Inc.
 
+import subprocess
+
 def strip_suffix(text, suffix):
     """
     Cut a set of the last characters from a provided string
@@ -18,3 +20,16 @@ def strip_prefix(text, prefix):
         return text[len(prefix):]
     else:
         return text
+
+def link_dir(src, dest, dir):
+    cmd_args = ["ln", "-s", src, dest]
+    proc = subprocess.Popen(cmd_args,
+                            cwd=dir,
+                            stderr=subprocess.PIPE,
+                            stdout=subprocess.PIPE,
+                            shell=False)
+    (out, err) = proc.communicate()
+    if proc.returncode != 0:
+        raise RuntimeError("Failed to sync {0} to {1} due to {2}".format(src, dest, err))
+
+
