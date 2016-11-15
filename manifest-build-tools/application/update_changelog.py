@@ -15,13 +15,14 @@ usage:
 The required parameters: 
 build-dir: The top directory which stores all the cloned repositories
 version: The new release version
-git-credential: url, credentials pair for the access to github repos.
 
 The optional parameters:
 message (default value is "new release" + version )
 publish: If true, the updated changlog will be push to github.
 git-credential: url, credentials pair for the access to github repos.
-                If publish is true, the parameter is required.
+                For example: https://github.com,GITHUB
+                GITHUB is an environment variable: GITHUB=username:password
+                If parameter publish is true, the parameter is required.
 """
 import os
 import sys
@@ -35,8 +36,8 @@ class ChangelogUpdater(object):
     def __init__(self, repo_dir, version):
         """
         The module updates debian/changelog under the directory of repository
-        __repo_dir: the directory of the repository
-        __version: the new version which is going to be updated to changelog
+        _repo_dir: the directory of the repository
+        _version: the new version which is going to be updated to changelog
         """
         self._repo_dir = repo_dir
         self._version = version
@@ -44,8 +45,8 @@ class ChangelogUpdater(object):
  
     def debian_exist(self):
         """
-        check whether debian or debianstatic directory under the repository
-        return: True if debian or debianstatic exist
+        check whether debian directory under the repository
+        return: True if debian exist
                 False
         """
         if os.path.isdir(self._repo_dir):
@@ -65,20 +66,29 @@ class ChangelogUpdater(object):
 
     def update_changelog(self, message=None):
         """
-        and an entry to changelog
+        add an entry to changelog
         :param message: the message which is going to be added to changelog
         return: Ture if changelog is updated
                 False, otherwise
         """
         repo_name = self.get_repo_name()
-        if repo_name == "on-http":
-            link_dir("debianstatic/on-http/", "debian", self._repo_dir)
+        debian_exist = self.debian_exist()
+        linked = False
+        if not debian_exist:
+            for filename in os.listdir(self._repo_dir):
+                if filename == "debianstatic":
+                    debianstatic_dir = os.path.join(self._repo_dir, "debianstatic")
+                    for debianstatic_filename in os.listdir(debianstatic_dir):
+                        if debianstatic_filename == repo_name:
+                            debianstatic_repo_dir = "debianstatic/{0}".format(repo_name)
+                            link_dir(debianstatic_repo_dir, "debian", self._repo_dir)
+                            linked = True
 
-        if not self.debian_exist():
+        if not debian_exist and not linked:
             return False
 
         print "start to update changelog of {0}".format(self._repo_dir)
-        cmd_args = ["dch", "-v", self._version, "-m"]
+        cmd_args = ["dch", "-v", self._version, "-b", "-m"]
         if message is None:
             message = "new release {0}".format(self._version)
         cmd_args += ["-p", message]
@@ -89,7 +99,7 @@ class ChangelogUpdater(object):
                                 shell=False)
         (out, err) = proc.communicate()
 
-        if repo_name == "on-http":
+        if linked:
             os.remove(os.path.join(self._repo_dir, "debian"))
 
         if proc.returncode != 0:
