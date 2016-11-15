@@ -11,6 +11,7 @@ usage:
 --branch branch/release-1.2.5 \
 --force \
 --publish \
+--publish-branch master \
 --git-credential https://github.com,GITHUB
 
 The required parameters: 
@@ -20,7 +21,8 @@ branch: The new branch name
 
 The optional parameters:
 force: If true, overwrite the destination manifest file even it already exists.
-publish: If true, the script will try to push the new manifest to github. That means the dest manifest should         under the manifest repository
+publish: If true, the script will try to push the new manifest to github. That means the dest manifest should         under the manifest repository.
+publish-branch: The new manifest will be pushed to the branch.
 git-credential: Git credentials for CI services.
                 If publish is true, the parameter is required.
 """
@@ -154,7 +156,7 @@ def main():
                 repo_dir = os.path.dirname(args.dest_manifest)
                 repo_operator.checkout_repo_branch(repo_dir, args.publish_branch)
                 generator.generate_manifest()
-                repo_operator.push_repo_changes(repo_dir, commit_message)
+                repo_operator.push_repo_changes(repo_dir, commit_message, push_all=True)
             else:
                 print "Please specify the git-credential and publish-branch if you want to push the new manifest"
                 sys.exit(1)

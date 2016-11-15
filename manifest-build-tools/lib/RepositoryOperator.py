@@ -412,4 +412,35 @@ class RepoOperator(object):
             self.git.run(["tag", "-a", tag_name, "-m", "\"Creating new tag\""], repo_dir)
             self.git.run(["push", "origin", "--tags"], repo_dir)
 
+    def push_repo_changes(self, repo_dir, commit_message, push_all=False):
+        """
+        publish changes of reposioty
+        :param repo_dir: the directory of the repository
+        :param commit_message: the message to be added to commit
+        :return: None
+        """
 
+        status_code, status_out, status_error = self.git.run(['status'], repo_dir)
+        if status_code == 0:
+            if "nothing to commit, working directory clean" in status_out:
+                print status_out
+                return
+
+        if push_all:
+            add_code, add_out, add_error = self.git.run(['add', '-A'], repo_dir)
+        else:
+            add_code, add_out, add_error = self.git.run(['add', '-u'], repo_dir)
+
+        if add_code != 0:
+            raise RuntimeError('Unable to add files for commiting.\n{0}\n{1}\n{2}'.format\
+                                 (add_code, add_out, add_error))
+
+        commit_code, commit_out, commit_error = self.git.run(['commit', '-m', commit_message], repo_dir)
+        if commit_code != 0:
+            raise RuntimeError('Unable to commit changes for pushing.\n{0}\n{1}\n{2}'.format\
+                                 (commit_code, commit_out, commit_error))
+
+        push_code, push_out, push_error = self.git.run(['push'], repo_dir)
+        if push_code !=0:
+            raise RuntimeError('Unable to push changes.\n{0}\n{1}\n{2}'.format(push_code, push_out, push_error))
+        return

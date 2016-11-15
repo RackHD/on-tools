@@ -245,6 +245,6 @@ class Manifest(object):
         
         if not result:
             messages.append("manifest file {0} is not valid".format(self._name))
-            error = '\n'.join(message)
+            error = '\n'.join(messages)
             raise KeyError(error)
 
