@@ -14,21 +14,24 @@ usage:
 --force \
 --git-credential https://github.com,GITHUB \
 --jobs 8 \
-checkout
-
-The parameters to this script:
-manifest: the path of manifest file
-builddir: the destination for checked out repositories
-force: use destination directory, even if it exists
-git-credential: url, credentials pair for the access to github repos
-jobs: number of parallel jobs to run. The number is related to the compute architecture, multi-core processors...
-action: the supported action, just like action1 action2 ...
+--branch-name "branch/release-1.5.1 \
+checkout \
+branch
 
 The required parameters:
-manifest
-builddir
-git-credential
-action
+manifest: the path of manifest file.
+builddir: the destination for checked out repositories.
+git-credential: url, credentials pair for the access to github repos.
+                For example: https://github.com,GITHUB
+                GITHUB is an environment variable: 
+                GITHUB=username:password
+action: the supported action, just like action1 action2 ...
+
+The optional parameters:
+force: use destination directory, even if it exists
+jobs: number of parallel jobs to run. The number is related to the compute architecture, multi-core processors...
+branch-name: the name of new branch.
+             If action contains "branch", the parameter is required.
 """
 
 import argparse
@@ -49,7 +52,7 @@ class ManifestActions(object):
     valid actions:
     checkout: check out a set of repositories to match the manifest file
     """
-    valid_actions = ['checkout']
+    valid_actions = ['checkout', 'branch']
 
     def __init__(self, manifest_path, builddir):
         """
@@ -69,9 +72,10 @@ class ManifestActions(object):
         self._jobs = 1
         self.actions = []
         
+        self._branch_name = None
+       
         self.repo_operator = RepoOperator()
  
-
     def set_force(self, force):
         """
         Standard setter for force
@@ -85,7 +89,23 @@ class ManifestActions(object):
         Standard getter for git_credentials
         :return: force
         """
-        return force
+        return self._force
+
+    
+    def set_branch_name(self, branch):
+        """
+        Standard setter for force
+        :param force: if true, overwrite a directory if it exists
+        :return: None
+        """
+        self._branch_name = branch
+
+    def get_branch_name(self):
+        """
+        Standard getter for git_credentials
+        :return: force
+        """
+        return self._branch_name
 
     def set_git_credentials(self, git_credential):
         """
@@ -176,7 +196,6 @@ class ManifestActions(object):
             print "Exiting due to error: {0}".format(error)
             sys.exit(1)
             
-
     def directory_for_repo(self, repo):
         """
         Get the directory of a repository
@@ -195,6 +214,167 @@ class ManifestActions(object):
         repo_directory = os.path.join(self._builddir, repo_directory)
         return repo_directory
 
+    def branch_existing_repositories(self):
+        """
+        Issues create branch commands to repos in a provided manifest
+        :return: None
+        """
+        if self._branch_name is None:
+            print "Please provide the new branch name"
+            sys.exit(2)
+
+        repo_list = self._manifest.get_repositories()
+        if repo_list is None:
+            print "No repository list found in manifest file"
+            sys.exit(2)
+        else:
+            # Loop through list of repos and create specified branch on each
+            for repo in repo_list:
+                self.create_repo_branch(repo, self._branch_name)
+
+    def create_repo_branch(self, repo, branch):
+        """
+        create branch  on the repos in the manifest file
+        :param repo: A dictionary
+        :return: None
+        """
+        try:
+            repo_directory = self.directory_for_repo(repo)
+            repo_url = repo["repository"]
+       
+            self.repo_operator.create_repo_branch(repo_url, repo_directory, branch)
+
+        except RuntimeError as error:
+            print "Exiting due to error: {0}".format(error)
+            sys.exit(1)   
+    
+    def checkout_branch_repositories(self, branch):
+        repo_list = self._manifest.get_repositories()
+        if repo_list is None:
+            print "No repository list found in manifest file"
+            sys.exit(2)
+        else:
+            # Loop through list of repos and checkout specified branch on each
+            for repo in repo_list:
+                self.checkout_repo_branch(repo, branch)
+
+    def checkout_repo_branch(self, repo, branch):
+        """
+        checkout to a specify branch on repository
+        :param repo: A dictionary
+        :param branch: the specify branch name
+        :return: None
+        """
+        try:
+            repo_directory = self.directory_for_repo(repo)
+            self.repo_operator.checkout_repo_branch(repo_directory, branch)
+        except RuntimeError as error:
+            print "Exiting due to error: {0}".format(error)
+            sys.exit(1)
+
+
+    def update_package_references(self, version=None):
+        print "Update internal package lists"
+        repo_list = self._manifest.get_repositories()
+        if repo_list is None:
+            print "No repository list found in manifest file"
+            sys.exit(2)
+        else:
+            # Loop through list of repos and update package.json on each
+            for repo in repo_list:
+                self.update_repo_package_list(repo, pkg_version=version)
+
+    def update_repo_package_list(self, repo, pkg_version=None):
+        """
+        Update the package.json of repository to point to new version
+        :param repo: a manifest repository entry
+        :param pkg_version: the version of package.json to point to
+        :return:
+        """
+        repo_dir = repo['directory-name']
+
+        package_json_file = os.path.join(repo_dir, "package.json")
+        if not os.path.exists(package_json_file):
+            # if there's no package.json file, there is nothing more for us to do here
+            return
+
+        changes = False
+        log = ""
+
+        with open(package_json_file, "r") as fp:
+            package_data = json.load(fp)
+            if 'dependencies' in package_data:
+                for package, version in package_data['dependencies'].items():
+                    new_version = self._update_dependency(version, pkg_version=pkg_version)
+                    if new_version != version:
+                        log += "  {0}:\n    WAS {1}\n    NOW {2}\n".format(package,
+                                                                           version,
+                                                                           new_version)
+                        package_data['dependencies'][package] = new_version
+                        changes = True
+        if changes:
+            print "There are changes to dependencies for {0}\n{1}".format(package_json_file, log)
+            os.remove(package_json_file)
+
+            new_file = package_json_file
+            with open(new_file, "w") as newfile:
+                json.dump(package_data, newfile, indent=4, sort_keys=True)
+
+        else:
+            print "There are NO changes to data for {0}".format(package_json_file)
+
+
+    def _update_dependency(self, version, pkg_version=None):
+        """
+        Check the specified package & version, and return a new package version if
+        the package is listed in the manifest.
+
+        :param version:
+        :return:
+        """
+        if not version.startswith("git+"):
+            return version
+
+        url = strip_prefix(version, "git+")
+        url = url.split('#')[0]
+        new_url = url
+
+        if pkg_version is None:
+            for repo in self._manifest.get_repositories():
+                if new_url == repo['repository']:
+                    if 'directory-name' in repo:
+                        new_url = os.path.abspath(repo['directory-name'])
+                        return new_url
+        else:
+            new_url = "git+{url}#{pkg_version}".format(url=new_url, pkg_version=pkg_version)
+            return new_url
+
+        return version
+
+    def push_changed_repositories(self, commit_message):
+        repo_list = self._manifest.get_repositories()
+        if repo_list is None:
+            print "No repository list found in manifest file"
+            sys.exit(2)
+        else:
+            # Loop through list of repos and publish changes on each
+            for repo in repo_list:
+                self.push_changed_repo(repo, commit_message)
+
+    def push_changed_repo(self, repo, commit_message):
+        """
+        publish changes in the repository
+        :param repo: A dictionary
+        :param commit_message: the message to be added to the commit
+        :return: None
+        """
+        repo_dir = repo['directory-name']
+
+        try:
+            self.repo_operator.push_repo_changes(repo_dir, commit_message)
+        except RuntimeError as error:
+            print "Exiting due to error: {0}".format(error)
+            sys.exit(1)
 
 def parse_command_line(args):
     """
@@ -217,6 +397,9 @@ def parse_command_line(args):
                         required=True,
                         help="Git credentials for CI services",
                         action="append")
+    parser.add_argument("--branch-name",
+                        help="branch name applied to repos",
+                        action="store")
     parser.add_argument("--jobs",
                         default=1,
                         help="Number of parallel jobs to run",
@@ -243,14 +426,37 @@ def main():
 
     if args.git_credential:
         manifest_actions.set_git_credentials(args.git_credential)
-
+    
     if args.jobs:
         manifest_actions.set_jobs(args.jobs)
 
+    if args.branch_name:
+        manifest_actions.set_branch_name(args.branch_name)
+
+    manifest_actions.check_builddir()
     # Start to check out a set of repositories within a manifest file
     if 'checkout' in manifest_actions.actions:
-        manifest_actions.check_builddir()
         manifest_actions.get_repositories()
+
+    if 'branch' in manifest_actions.actions:
+        new_branch = manifest_actions.get_branch_name()
+        if 'checkout' not in manifest_actions.actions:
+            manifest_actions.get_repositories()
+
+        if new_branch is not None:
+            print "create branch and update package.json for the repos..."
+            # Create a new branch if it doesn't exist.
+            manifest_actions.branch_existing_repositories()
+            # Checkout to the new branch
+            manifest_actions.checkout_branch_repositories(new_branch)
+            # Update the package.json to point to the new branch
+            manifest_actions.update_package_references(version=new_branch)
+            # Push the changes
+            commit_message = "update the dependencies version to {0}".format(new_branch)
+            manifest_actions.push_changed_repositories(commit_message)
+        else:
+            print "No setting for --branch-name"
+            sys.exit(1)
 
 if __name__ == "__main__":
     main()

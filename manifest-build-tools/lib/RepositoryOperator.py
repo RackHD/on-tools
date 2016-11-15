@@ -412,4 +412,40 @@ class RepoOperator(object):
             self.git.run(["tag", "-a", tag_name, "-m", "\"Creating new tag\""], repo_dir)
             self.git.run(["push", "origin", "--tags"], repo_dir)
 
+    def create_repo_branch(self, repo_url, repo_dir, branch_name):
+        """
+        Creates branch on the repo
+        :param repo_url: the url of the repository
+        :param repo_dir: the directory of the repository
+        :param branch_name: the branch name to be set
+        :return: None
+        """
+        # See if that branch exists for the repo
+        cmd_returncode, cmd_value, cmd_error  = self.git.run(["ls-remote", "--exit-code", "--heads", repo_url, branch_name], repo_dir)
 
+        # Raise RuntimeError if branch already exists, otherwise create it
+        if cmd_returncode == 0 and cmd_value != '':
+            raise RuntimeError("Error: Branch {0} already exists - exiting now...".format(cmd_value))
+        else:
+            print "Creating branch {0} for repo {1}".format(branch_name, repo_url)
+            branch_code, branch_out, branch_error = self.git.run(["branch", branch_name], repo_dir)
+            if branch_code != 0:
+                print branch_out
+                raise RuntimeError("Error: Failed to create local branch {0} with error: {1}.".format(branch_name, branch_error))
+
+            publish_code, publish_out, publish_error = self.git.run(["push", "-u", "origin", branch_name], repo_dir)
+            if publish_code != 0:
+                print publish_out
+                raise RuntimeError("Error: Failed to publish local branch {0} with error: {1}".format(branch_name, publish_error))
+
+    def checkout_repo_branch(self, repo_dir, branch_name):
+        """
+        Check out to specify branch on the repo
+        :param repo_dir: the directory of the repository
+        :param branch_name: the branch name to be checked
+        :return: None
+        """
+        cmd_returncode, cmd_value, cmd_error  = self.git.run(["checkout", branch_name], repo_dir)
+
+        if cmd_returncode != 0:
+            raise RuntimeError("Error: Failed to checkout branch {0}".format(cmd_value))
