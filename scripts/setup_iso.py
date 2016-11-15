@@ -79,9 +79,17 @@ def do_setup_repo(osname, osver, src, dest, link):
 
         shutil.copyfile(src+'/isolinux/'+vmlinuz, dstpath+'/'+vmlinuz)
     elif osname == 'Ubuntu':
-        p = subprocess.Popen(['ls', src], stdout=subprocess.PIPE)
-        filenames = p.stdout.read().split('\n')
-        ignoreList=[f for f in filenames if f == 'ubuntu' or f == '']
+        # Execute 'ls -l' and find out the soft link that points to itself
+        p = subprocess.Popen(['ls', '-l', src], stdout=subprocess.PIPE)
+        files = p.stdout.read().split('\n')
+        ignoreList = list()
+        # The first element is something like "Total 212" and the last element is '', so skip both while finding the softlink
+        # The for loop is to find 'ubuntu' from  a list like   ["lr-xr-xr-x","root","root","ubuntu","->","."]
+        for f in files[1:-1]:
+            f_info = f.split(' ')
+            if 'l'  in f_info[0] and f_info[-2] == '->' and f_info[-1] == '.':
+                ignoreList.append(f_info[-3])
+
         shutil.copytree(src, dstpath, ignore=shutil.ignore_patterns(*ignoreList))
     else:
         shutil.copytree(src, dstpath)
