@@ -78,6 +78,19 @@ def do_setup_repo(osname, osver, src, dest, link):
         os.system(syscall)
 
         shutil.copyfile(src+'/isolinux/'+vmlinuz, dstpath+'/'+vmlinuz)
+    elif osname == 'Ubuntu':
+        # Execute 'ls -l' and find out the soft link that points to itself
+        p = subprocess.Popen(['ls', '-l', src], stdout=subprocess.PIPE)
+        files = p.stdout.read().split('\n')
+        ignoreList = list()
+        # The first element is something like "Total 212" and the last element is '', so skip both while finding the softlink
+        # The for loop is to find 'ubuntu' from  a list like   ["lr-xr-xr-x","root","root","ubuntu","->","."]
+        for f in files[1:-1]:
+            f_info = f.split(' ')
+            if 'l'  in f_info[0] and f_info[-2] == '->' and f_info[-1] == '.':
+                ignoreList.append(f_info[-3])
+
+        shutil.copytree(src, dstpath, ignore=shutil.ignore_patterns(*ignoreList))
     else:
         shutil.copytree(src, dstpath)
 
@@ -123,10 +136,6 @@ def determine_os_ver(srcdir, iso_info):
         elif "RPM-GPG-KEY-CentOS-Testing-7" in src_dir_list:
             osname = "Centos"
             osver = '7.0'
-        elif 'isolinux' in src_dir_list:
-            print 'attempting LiveCD netboot'
-            osname = 'LiveCD'
-            osver = vid
         elif 'ubuntu' in src_dir_list:
             # For ubuntu, the osver is combined by the version name(add -server for unbuntu server and without -server
             # for desktop) and version number, e.g.ubuntu-server-16.04
@@ -137,6 +146,11 @@ def determine_os_ver(srcdir, iso_info):
             assert m.group(1), "The version name(e.g., unbuntu-server) for ubuntu is not correct"
             assert m.group(2), "The version for ubuntu is not correct"
             osver = m.group(1) + '-' + m.group(2)
+        elif 'isolinux' in src_dir_list:
+            print 'attempting LiveCD netboot'
+            osname = 'LiveCD'
+            osver = vid
+
         elif 'suse' in src_dir_list:
             osname='SUSE'
             if vid == '': assert ValueError, "The volume ID is not get correctly"
