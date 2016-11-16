@@ -45,30 +45,36 @@ class Manifest(object):
         self.parse_manifest()
 
     def set_git_credentials(self, git_credentials):
-        self._git_credentials.append = git_credentials
+        self._git_credentials = git_credentials
         self.setup_gitbit()
-
-    def get_downstream_jobs(self):
+    
+    @property
+    def downstream_jobs(self):
         return self._downstream_jobs
 
-    def get_repositories(self):
+    @property
+    def repositories(self):
         return self._repositories
 
-    def get_manifest(self):
+    @property
+    def manifest(self):
         return self._manifest
 
-    def get_name(self):
+    @property
+    def name(self):
         return self._name
 
-    def get_file_path(self):
+    @property
+    def file_path(self):
         return self._file_path
 
-    def get_build_name(self):
+    @property
+    def build_name(self):
         return self._build_name
 
-    def get_build_requirements(self):
+    @property
+    def build_requirements(self):
         return self._build_requirements
-
 
     def setup_gitbit(self):
         """
