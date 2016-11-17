@@ -25,7 +25,15 @@ git-credential: url, credentials pair for the access to github repos.
                 For example: https://github.com,GITHUB
                 GITHUB is an environment variable: 
                 GITHUB=username:password
-action: the supported action, just like action1 action2 ...
+action: the supported action, includes checkout branch.
+        "checkout": it  will clone all the repositories in a manifest file;
+                    if "branch" in a repository dictionary, the action will check out to the branch.
+                    if "commit-id" in a repository dictionary, the action will reset to the commit 
+        "branch": it will create a new branch for all the repositories under builddir
+                  and update the package.json to point to the new branch.
+                  For example:
+                  - git+https://github.com/RackHD/on-core.git
+                  + git+https://github.com/RackHD/on-core.git#branch/release-1.2.3
 
 The optional parameters:
 force: use destination directory, even if it exists
