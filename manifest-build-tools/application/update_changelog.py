@@ -2,7 +2,9 @@
 # Copyright 2015-2016, EMC, Inc.
 
 """
-The script update changelog under debian
+The script will update the debian/changelog files, inside all git repos under the folder which "build-dir" param specified. 
+The version field in changelog file will be updated to given version ( via "dch  -v $ver -b -m" command).
+
 
 usage:
 ./on-tools/manifest-build-tools/HWIMO-BUILD on-tools/manifest-build-tools/application/update_changelog.py \
@@ -75,6 +77,8 @@ class ChangelogUpdater(object):
         debian_exist = self.debian_exist()
         linked = False
         if not debian_exist:
+            # Handle repository which contains debianstatic/repository_name folder, 
+            # for example: debianstatic/on-http
             for filename in os.listdir(self._repo_dir):
                 if filename == "debianstatic":
                     debianstatic_dir = os.path.join(self._repo_dir, "debianstatic")
@@ -88,6 +92,10 @@ class ChangelogUpdater(object):
             return False
 
         print "start to update changelog of {0}".format(self._repo_dir)
+        # -v: Add a new changelog entry with version number specified
+        # -b: Force a version to be less than the current one
+        # -m: Don't change (maintain) the trailer line in the changelog entry; i.e.
+        #     maintain the maintainer and date/time details
         cmd_args = ["dch", "-v", self._version, "-b", "-m"]
         if message is None:
             message = "new release {0}".format(self._version)
