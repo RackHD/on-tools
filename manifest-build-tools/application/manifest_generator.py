@@ -27,7 +27,7 @@ The optional parameters:
 force: If true, overwrite the destination manifest file even it already exists.
 publish: If true, the script will try to run "git push" under the directory of dest manifest. 
 publish-branch: The new manifest will be pushed to the branch.
-jobs: number of parallel jobs to run. The number is related to the compute architecture, multi-core processors...
+jobs: number of parallel jobs to run(when check out code). The number is related to the compute architecture, multi-core processors...
 """
 import os
 import sys
