@@ -12,8 +12,9 @@
 # --file_path local_package_path \
 # --component "main" \
 # --distribution "trusty" \
-# --architecture "amd64,i386"
-#
+# --architecture "amd64,i386" \
+# --target_folder "abc/xyz"
+
 # The parameters are required:
 # user:  the Bintray user name
 # api_key: the Bintray api key with privilege being able to upload packages to target "subject"
@@ -21,13 +22,14 @@
 # repo: the Bintary repository name
 # package: the Bintray package name
 # version: the Bintray version
-# file_path: the local file path which is going to be uploaded
+# file_path: the local file's path which is going to be uploaded
 #
 # Below parameters are optional:
-# component (default: main)          
+# component (default: main)
 # distribution (default: trusty)
 # architecture (default: amd64)
-# The 3 parameters are the attibutes of debian package used to identify the apt-get source
+# The above 3 parameters are the attibutes of debian package used to identify the apt-get source
+# target_folder (default: blank) it's used for uploading specific generic files to remote bintray customized folder.( use it to upload debian package, only for experienced user)
 ############################################
 
 set -e
@@ -65,7 +67,12 @@ while [ "$1" != "" ];do
         --architecture)
             shift
             ARCHITECTURE=$1;;
+        --target_folder)
+            shift
+            TARGET_FOLDER=$1;;
+
         *)
+        echo "[Error] Bad Parameter ($1). Aborting.."
         exit 1
     esac
     shift
@@ -209,7 +216,9 @@ deploy_package() {
 upload_content() {
   echo "Uploading ${PACKAGE_PATH}..."
 
-  if [ $(${CURL} --write-out %{http_code} --silent --output /dev/null -H X-Bintray-Debian-Distribution:${DISTRIBUTION} -H X-Bintray-Debian-Component:${COMPONENT} -H X-Bintray-Debian-Architecture:${ARCHITECTURE} -H X-Bintray-Override:1 -T ${PACKAGE_PATH} ${BINTRAY_API}/content/${BINTRAY_SUBJECT}/${BINTRAY_REPO}/${BINTRAY_PCK}/${BINTRAY_PCK_VERSION}/ ) -eq "201" ]; then
+  uploaded_file_name=$(basename ${PACKAGE_PATH})
+
+  if [ $(${CURL} --write-out %{http_code} --silent --output /dev/null -H X-Bintray-Debian-Distribution:${DISTRIBUTION} -H X-Bintray-Debian-Component:${COMPONENT} -H X-Bintray-Debian-Architecture:${ARCHITECTURE} -H X-Bintray-Override:1 -T ${PACKAGE_PATH} ${BINTRAY_API}/content/${BINTRAY_SUBJECT}/${BINTRAY_REPO}/${BINTRAY_PCK}/${BINTRAY_PCK_VERSION}/${TARGET_FOLDER}/${uploaded_file_name} ) -eq "201" ]; then
       echo "Package ${PACKAGE_PATH} uploaded"
       return 0
   else
