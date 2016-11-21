@@ -60,7 +60,7 @@ class ManifestActions(object):
     valid actions:
     checkout: check out a set of repositories to match the manifest file
     """
-    valid_actions = ['checkout', 'branch']
+    valid_actions = ['checkout', 'branch', 'packagerefs']
 
     def __init__(self, manifest_path, builddir, force=False, git_credentials=None, jobs=1, actions=[], branch_name=None):
         """
@@ -77,7 +77,7 @@ class ManifestActions(object):
         self._builddir = builddir
         self._manifest = None
         self.handle_manifest(manifest_path)
-        self._jobs = 1
+        self._jobs = jobs
         self.actions = []
         for action in actions:
             self.add_action(action)
@@ -235,6 +235,12 @@ class ManifestActions(object):
         # Start to create branch and update package.json
         if 'branch' in self.actions:
             self.execute_branch_action()
+
+        # Start to update the packge.json, for example:
+        # - git+https://github.com/RackHD/on-core.git
+        # +     
+        if 'packagerefs' in self.actions:
+            self.update_package_references()
 
     def execute_branch_action(self):
         """
