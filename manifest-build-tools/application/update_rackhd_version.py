@@ -8,6 +8,7 @@ usage:
 --builddir b \
 --force \
 --git-credential https://github.com/PengTian0,GITHUB \
+--jobs 8
                      
 The required parameters:
 manifest-repo-dir: The directory of manifest repository.
@@ -19,7 +20,7 @@ git-credential: url, credentials pair for the access to github repos
 The optional parameter:
 force: Overwrite the build directory if it exists.
 is-official-release: if true, this release is official, the default value is false
-
+jobs: number of parallel jobs to run(checkout repositories). The number is related to the compute architecture, multi-core processors...
 """
 import argparse
 import sys
@@ -34,32 +35,22 @@ import deb822
 import subprocess
 
 class RackhdDebianControlUpdater(object):
-    def __init__(self, manifest_dir, builddir):
+    def __init__(self, manifest_dir, builddir, is_official_release=False):
         """
         Compute the version of each repository under builddir
         and update the debian/control with these versions
 
-        __git_credential - url, credentials pair for the access to github repos
         __manifest_repo_dir - The directory of Repository manifest
         __builddir - Destination for checked out repositories
         __is_official_release - True if the official is official release
         :return: None
         """
-        self._git_credentials = None
         self._builddir = builddir
         self._manifest_repo_dir = manifest_dir       
-        self._is_official_release = False
+        self._is_official_release = is_official_release
 
         self.repo_operator = RepoOperator()
         
-    def set_git_credentials(self, git_credential):
-        """
-        Standard setter for git_credentials
-        :return: None
-        """
-        self._git_credentials = git_credential
-        self.repo_operator.setup_gitbit(credentials=self._git_credentials)
-
     def set_is_official_release(self, is_official_release):
         """
         Standard setter for is_official_release
@@ -195,8 +186,18 @@ def parse_command_line(args):
                         help="whether this release is official",
                         action="store_true")
 
+    parser.add_argument('--jobs',
+                        help="Number of build jobs to run in parallel",
+                        default=-1,
+                        type=int,
+                        action="store")
+
     parsed_args = parser.parse_args(args)
     return parsed_args
+
+def checkout_repos(manifest, builddir, force, git_credential, jobs):
+    manifest_actions = ManifestActions(manifest, builddir, force=force, git_credentials=git_credential, jobs=jobs, actions=["checkout"])
+    manifest_actions.execute_actions()
 
 def main():
     # Parse arguments
@@ -204,22 +205,10 @@ def main():
 
     # Checkout repositories according to manifest file
     manifest_file = os.path.join(args.manifest_repo_dir, args.manifest_name)
-    manifest_actions = ManifestActions(manifest_file, args.builddir)
-    manifest_actions.set_git_credentials(args.git_credential)
-    manifest_actions.set_jobs(8)
-    if args.force:
-        manifest_actions.set_force(args.force)
-    manifest_actions.check_builddir()
-    manifest_actions.get_repositories()
+    checkout_repos(manifest_file, args.builddir, args.force, args.git_credential, args.jobs)
 
     # Start to initial an instance of UpdateRackhdVersion
-    updater = RackhdDebianControlUpdater(args.manifest_repo_dir, args.builddir)
-
-    if args.is_official_release:
-        updater.set_is_official_release(args.is_official_release)
-
-    if args.git_credential:
-        updater.set_git_credentials(args.git_credential)
+    updater = RackhdDebianControlUpdater(args.manifest_repo_dir, args.builddir, is_official_release=args.is_official_release)
 
     # Update the RackHD/debian/control according to manifest
     updater.update_RackHD_control()
