@@ -103,6 +103,13 @@ def parse_args(args):
     return parsed_args
 
 def update_rackhd_control(top_level_dir, is_official_release):
+    """
+    Update the rackhd/debian/control with the version of on-xxx.deb under $top_level_dir.
+    :param top_level_dir: Top level directory that stores all the
+                          cloned repositories.
+    :param is_official_release: If true, this release is official release
+    :return: None
+    """
     updater = RackhdDebianControlUpdater(top_level_dir, is_official_release)
     updater.update_RackHD_control()
 
