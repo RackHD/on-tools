@@ -85,7 +85,6 @@ class ManifestActions(object):
         self._branch_name = branch_name
        
         self.repo_operator = RepoOperator(self._git_credentials)
-        self.check_builddir()
 
     def set_force(self, force):
         """
@@ -230,6 +229,7 @@ class ManifestActions(object):
         """
         # Start to check out a set of repositories within a manifest file
         if 'checkout' in self.actions:
+            self.check_builddir()
             self.get_repositories()
 
         # Start to create branch and update package.json
