@@ -143,7 +143,9 @@ def get_push_executable():
 
 def upload_debs(build_directory, debian_depth, bintray):
     """
-    Upload the debian packages under top level directory.
+    The function will walk through all sub-folder under $build_directory, and for every *.deb found:
+        1. retrieve its version and package name
+        2. upload to bintray with this version
     It assumes that if a debian exists in the folder, then it must be a successful build.
 
     :param build_directory: The directory where all the build repositories are cloned.
@@ -160,7 +162,8 @@ def upload_debs(build_directory, debian_depth, bintray):
 
         for file_itr in debian_files:
             version = common.get_debian_version(file_itr)
-            upload_result = bintray.upload_a_file(repo, version, file_itr)
+            package = common.get_debian_package(file_itr)
+            upload_result = bintray.upload_a_file(package, version, file_itr)
             if upload_result:
                 return_dict_detail[repo] = "{package} upload successfully".format(package=file_itr)
             else:
