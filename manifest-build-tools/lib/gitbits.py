@@ -11,7 +11,7 @@ import os
 import subprocess
 import tempfile
 from urlparse import urlparse
-
+from common import *
 
 class GitBit(object):
     @staticmethod
@@ -172,7 +172,7 @@ class GitBit(object):
         cmd_args = [self.__git_executable] + config_args + args
 
         if dry_run or self.__verbose:
-            print "GIT: {0}".format(" ".join(cmd_args))
+            logging.warning("GIT: {0}".format(" ".join(cmd_args)))
 
         if dry_run:
             return 0, None, None
