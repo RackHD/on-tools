@@ -211,7 +211,6 @@ class RepoOperator(object):
     def set_git_executable(self, executable):
         self.git.set_excutable(excutable)
 
-
     @staticmethod
     def print_command_summary(name, results):
         """
@@ -262,7 +261,6 @@ class RepoOperator(object):
                         'builddir': dest_dir,
                         'credentials': self._git_credentials
                        }
-
                 cloner.add_task(data)
             cloner.finish()
             results = cloner.get_results()
@@ -274,7 +272,6 @@ class RepoOperator(object):
             if error:
                 raise RuntimeError("Failed to clone repositories")
 
-    
     def clone_repo(self, repo_url, dest_dir, repo_commit="HEAD"):
         """
         check out a repository to dest directory from the repository url
@@ -298,8 +295,8 @@ class RepoOperator(object):
         """
         if repo_dir is None or not os.path.isdir(repo_dir):
             raise RuntimeError("The repository directory is not a directory")
-        code, output, error = self.git.run(['show', '-s', '--pretty=format:%ct'], directory=repo_dir)
-        if code == 0:
+        return_code, output, error = self.git.run(['show', '-s', '--pretty=format:%ct'], directory=repo_dir)
+        if return_code == 0:
             return output.strip()
         else:
             raise RuntimeError("Unable to get commit date in directory {0}".format(repo_dir))
@@ -313,9 +310,9 @@ class RepoOperator(object):
         if repo_dir is None or not os.path.isdir(repo_dir):
             raise RuntimeError("The repository directory is not a directory")
 
-        code, output, error = self.git.run(['log', '--format=format:%H', '-n', '1'], directory=repo_dir)
+        return_code, output, error = self.git.run(['log', '--format=format:%H', '-n', '1'], directory=repo_dir)
 
-        if code == 0:
+        if return_code == 0:
             return output.strip()
         else:
             raise RuntimeError("Unable to get commit id in directory {0}".format(repo_dir))
@@ -331,9 +328,9 @@ class RepoOperator(object):
         if repo_dir is None or not os.path.isdir(repo_dir):
             raise RuntimeError("The repository directory is not a directory")
 
-        code, output, error = self.git.run(['log', '--format=format:%B', '-n', '1', commit], directory=repo_dir)
+        return_code, output, error = self.git.run(['log', '--format=format:%B', '-n', '1', commit], directory=repo_dir)
 
-        if code == 0:
+        if return_code == 0:
             return output.strip()
         else:
             raise RuntimeError("Unable to get commit message of {commit_id} in directory {repo_dir}"\
@@ -350,9 +347,9 @@ class RepoOperator(object):
         if repo_dir is None or not os.path.isdir(repo_dir):
             raise RuntimeError("The repository directory is not a directory")
 
-        code, output, error = self.git.run(['ls-remote', '--get-url'], directory=repo_dir)
+        return_code, output, error = self.git.run(['ls-remote', '--get-url'], directory=repo_dir)
 
-        if code == 0:
+        if return_code == 0:
             return output.strip()
         else:
             raise RuntimeError("Unable to find the repository url in directory {0}".format(repo_dir))
@@ -367,9 +364,9 @@ class RepoOperator(object):
         if repo_dir is None or not os.path.isdir(repo_dir):
             raise RuntimeError("The repository directory is not a directory")
 
-        code, output, error = self.git.run(['symbolic-ref', '--short', 'HEAD'], directory=repo_dir)
+        return_code, output, error = self.git.run(['symbolic-ref', '--short', 'HEAD'], directory=repo_dir)
 
-        if code == 0:
+        if return_code == 0:
             return output.strip()
         else:
             raise RuntimeError("Unable to find the current branch in directory {0}".format(repo_dir))
@@ -386,10 +383,9 @@ class RepoOperator(object):
         else:
             sliced_branch = branch
 
-        cmd_returncode, cmd_value, cmd_error = self.git.run(['ls-remote', repo_url, 'heads/*{0}'
-                                                                    .format(sliced_branch)])
+        return_code, output, error = self.git.run(['ls-remote', repo_url, 'heads/*{0}'.format(sliced_branch)])
 
-        if cmd_returncode is not 0 or cmd_value is '':
+        if return_code is not 0 or output is '':
             raise RuntimeError("The branch, '{0}', provided for '{1}', does not exist."
                                .format(branch, repo_url))
 
@@ -402,14 +398,81 @@ class RepoOperator(object):
         :return: None
         """
         # See if that tag exists for the repo
-        cmd_returncode, cmd_value, cmd_error  = self.git.run(["tag", "-l", tag_name], repo_dir)
+        return_code, output, error  = self.git.run(["tag", "-l", tag_name], repo_dir)
 
         # Raise RuntimeError if tag already exists, otherwise create it
-        if cmd_returncode == 0 and cmd_value != '':
-            raise RuntimeError("Error: Tag {0} already exists - exiting now...".format(cmd_value))
+        if return_code == 0 and output != '':
+            raise RuntimeError("Error: Tag {0} already exists - exiting now...".format(output))
         else:
             print "Creating tag {0} for repo {1}".format(tag_name, repo_url)
             self.git.run(["tag", "-a", tag_name, "-m", "\"Creating new tag\""], repo_dir)
             self.git.run(["push", "origin", "--tags"], repo_dir)
 
+    def create_repo_branch(self, repo_url, repo_dir, branch_name):
+        """
+        Creates branch on the repo
+        :param repo_url: the url of the repository
+        :param repo_dir: the directory of the repository
+        :param branch_name: the branch name to be set
+        :return: None
+        """
+        # See if that branch exists for the repo
+        return_code, output, error  = self.git.run(["ls-remote", "--exit-code", "--heads", repo_url, branch_name], repo_dir)
+        # Raise RuntimeError if branch already exists, otherwise create it
+        if return_code == 0 and output != '':
+            raise RuntimeError("Error: Branch {0} already exists - exiting now...".format(output))
+        else:
+            print "Creating branch {0} for repo {1}".format(branch_name, repo_url)
+            return_code, output, error = self.git.run(["branch", branch_name], repo_dir)
+            if return_code != 0:
+                print output
+                raise RuntimeError("Error: Failed to create local branch {0} with error: {1}.".format(branch_name, error))
+            return_code, output, error = self.git.run(["push", "-u", "origin", branch_name], repo_dir)
+            if return_code != 0:
+                print output
+                raise RuntimeError("Error: Failed to publish local branch {0} with error: {1}".format(branch_name, error))
 
+    def checkout_repo_branch(self, repo_dir, branch_name):
+        """
+        Check out to specify branch on the repo
+        :param repo_dir: the directory of the repository
+        :param branch_name: the branch name to be checked
+        :return: None
+        """
+        return_code, output, error  = self.git.run(["checkout", branch_name], repo_dir)
+
+        if return_code != 0:
+            raise RuntimeError("Error: Failed to checkout branch {0}".format(output))
+
+    def push_repo_changes(self, repo_dir, commit_message, push_all=False):
+        """
+        publish changes of reposioty
+        :param repo_dir: the directory of the repository
+        :param commit_message: the message to be added to commit
+        :return: None
+        """
+
+        status_code, status_out, status_error = self.git.run(['status'], repo_dir)
+        if status_code == 0:
+            if "nothing to commit, working directory clean" in status_out:
+                print status_out
+                return
+
+        if push_all:
+            add_code, add_out, add_error = self.git.run(['add', '-A'], repo_dir)
+        else:
+            add_code, add_out, add_error = self.git.run(['add', '-u'], repo_dir)
+
+        if add_code != 0:
+            raise RuntimeError('Unable to add files for commiting.\n{0}\n{1}\n{2}'.format\
+                                 (add_code, add_out, add_error))
+
+        commit_code, commit_out, commit_error = self.git.run(['commit', '-m', commit_message], repo_dir)
+        if commit_code != 0:
+            raise RuntimeError('Unable to commit changes for pushing.\n{0}\n{1}\n{2}'.format\
+                                 (commit_code, commit_out, commit_error))
+
+        push_code, push_out, push_error = self.git.run(['push'], repo_dir)
+        if push_code !=0:
+            raise RuntimeError('Unable to push changes.\n{0}\n{1}\n{2}'.format(push_code, push_out, push_error))
+        return
