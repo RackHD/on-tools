@@ -49,7 +49,7 @@ def drop_indexes():
 
 print "Warning! Execute this script will drop all indexes from mongo databases!\nYet the script will help you backup all mongo databases\
  in a directory called dump.save under your working directory.\nIf you were to restore your mongoDB after executing this script, \
-simpleyly run 'mongorestore dump.save'.Continue running the script(Yes|No)?"
+simpleyly run 'mongorestore dump.bak'.Continue running the script(Yes|No)?"
 
 for attemp in range(3):
     user_input = raw_input()
