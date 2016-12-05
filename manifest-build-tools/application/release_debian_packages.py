@@ -146,7 +146,6 @@ def upload_debs(build_directory, debian_depth, bintray):
     The function will walk through all sub-folder under $build_directory, and for every *.deb found:
         1. retrieve its version and package name
         2. upload to bintray with this version
-    It assumes that if a debian exists in the folder, then it must be a successful build.
 
     :param build_directory: The directory where all the build repositories are cloned.
     :param debian_depth: integer for level of directories to look into
@@ -154,21 +153,19 @@ def upload_debs(build_directory, debian_depth, bintray):
     :param bintray: An instance of Bintray.
     """
     return_dict_detail = {}
-    for repo in os.listdir(build_directory):
-        repo_dir = os.path.join(build_directory, repo)
-        debian_files = common.find_specify_type_files(repo_dir, ".deb", depth=debian_depth)
-        if len(debian_files) == 0:
-            return_dict_detail[repo] = "No debians found under {dir}".format(dir=repo_dir)
+    debian_files = common.find_specify_type_files(build_directory, ".deb", depth=debian_depth)
+    if len(debian_files) == 0:
+        return_dict_detail[build_directory] = "No debians found under {dir}".format(dir=build_directory)
 
-        for file_itr in debian_files:
-            version = common.get_debian_version(file_itr)
-            package = common.get_debian_package(file_itr)
-            upload_result = bintray.upload_a_file(package, version, file_itr)
-            if upload_result:
-                return_dict_detail[repo] = "{package} upload successfully".format(package=file_itr)
-            else:
-                raise RuntimeError("Upload Failure at {repo}.\nDetails:{file}: Fail"
-                                   .format(repo=repo, file=file_itr))
+    for file_itr in debian_files:
+        version = common.get_debian_version(file_itr)
+        package = common.get_debian_package(file_itr)
+        upload_result = bintray.upload_a_file(package, version, file_itr)
+        if upload_result:
+            return_dict_detail[package] = "{package} upload successfully".format(package=file_itr)
+        else:
+            raise RuntimeError("Upload Failure at {repo}.\nDetails:{file}: Fail"
+                               .format(repo=package, file=file_itr))
 
     return return_dict_detail
 
