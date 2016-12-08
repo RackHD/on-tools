@@ -20,11 +20,15 @@ branch
 
 The required parameters:
 manifest: the path of manifest file.
-builddir: the destination for clone/check out repositories.
+builddir: the destination for checked out repositories.
+git-credential: url, credentials pair for the access to github repos.
+                For example: https://github.com,GITHUB
+                GITHUB is an environment variable: 
+                GITHUB=username:password
 action: the supported action, includes checkout branch.
         "checkout": it  will clone all the repositories in a manifest file;
                     if "branch" in a repository dictionary, the action will check out to the branch.
-                    if "commit-id" in a repository dictionary, the action will reset to the commit
+                    if "commit-id" in a repository dictionary, the action will reset to the commit 
         "branch": it will create a new branch for all the repositories under builddir
                   and update the package.json to point to the new branch.
                   For example:
@@ -32,18 +36,10 @@ action: the supported action, includes checkout branch.
                   + git+https://github.com/RackHD/on-core.git#branch/release-1.2.3
 
 The optional parameters:
-force: use destination directory, even if it exists, this will overwite exist repos.
-git-credential: url, credentials pair for the access to github repos.
-                For example: https://github.com,GITHUB
-                GITHUB is an environment variable:
-                GITHUB=username:password
-                If action contains "branch", or checkout private repo,
-                the parameter is required.
-jobs: number of parallel jobs to run. The number is related to the compute architecture,
-      multi-core processors...
+force: use destination directory, even if it exists
+jobs: number of parallel jobs to run. The number is related to the compute architecture, multi-core processors...
 branch-name: the name of new branch.
              If action contains "branch", the parameter is required.
-
 """
 
 import argparse
