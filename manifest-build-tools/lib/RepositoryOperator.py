@@ -317,6 +317,16 @@ class RepoOperator(object):
         else:
             raise RuntimeError("Unable to get commit id in directory {0}".format(repo_dir))
 
+    def get_lastest_commit_before_date(self, repo_dir, date):
+        if repo_dir is None or not os.path.isdir(repo_dir):
+            raise RuntimeError("The repository directory is not a directory")
+        return_code, output, error = self.git.run(['log', '--format=format:%H', '--before='+date, '-n', '1'], directory=repo_dir)
+
+        if return_code == 0:
+            return output.strip()
+        else:
+            raise RuntimeError("Unable to get commit id before {date} in directory {repo_dir}"\
+                  .format(date=date, repo_dir=repo_dir))
 
     def get_commit_message(self, repo_dir, commit):
         """

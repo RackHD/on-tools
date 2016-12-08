@@ -1,0 +1,72 @@
+{
+    "build-name": "rackhd-devel", 
+    "build-requirements": "xenial", 
+    "downstream-jobs": [], 
+    "repositories": [
+        {
+            "branch": "", 
+            "commit-id": "",
+            "repository": "https://github.com/PengTian0/on-core.git"
+        }, 
+        {
+            "branch": "", 
+            "commit-id": "",
+            "repository": "https://github.com/PengTian0/on-dhcp-proxy.git"
+        }, 
+        {
+            "branch": "", 
+            "commit-id": "",
+            "repository": "https://github.com/PengTian0/on-http.git"
+        }, 
+        {
+            "branch": "", 
+            "commit-id": "",
+            "repository": "https://github.com/PengTian0/on-syslog.git"
+        }, 
+        {
+            "branch": "", 
+            "commit-id": "",
+            "repository": "https://github.com/PengTian0/on-taskgraph.git"
+        }, 
+        {
+            "branch": "", 
+            "commit-id": "",
+            "repository": "https://github.com/PengTian0/on-tasks.git"
+        }, 
+        {
+            "branch": "", 
+            "commit-id": "",
+            "repository": "https://github.com/PengTian0/on-tftp.git"
+        }, 
+        {
+            "branch": "", 
+            "commit-id": "",
+            "repository": "https://github.com/PengTian0/on-skupack.git"
+        }, 
+        {
+            "branch": "", 
+            "commit-id": "",
+            "repository": "https://github.com/PengTian0/di.js.git"
+        }, 
+        {
+            "branch": "", 
+            "commit-id": "",
+            "repository": "https://github.com/PengTian0/RackHD.git"
+        }, 
+        {
+            "branch": "", 
+            "commit-id": "",
+            "repository": "https://github.com/PengTian0/on-imagebuilder.git"
+        },
+        {
+            "branch": "", 
+            "commit-id": "",
+            "repository": "https://github.com/PengTian0/on-wss.git"
+        },
+        {
+            "branch": "", 
+            "commit-id": "",
+            "repository": "https://github.com/PengTian0/on-statsd.git"
+        }
+    ]
+}
