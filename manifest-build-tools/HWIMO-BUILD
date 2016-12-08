@@ -31,7 +31,7 @@ BASEDIR=$(dirname "$0")
 
 if [ ! -d $BASEDIR/env/hwimobuild -o $BASEDIR/requirements.txt -nt $BASEDIR/env/hwimobuild ]
 then
-  echo -n "Creating virtual environment... "
+  echo -n "Creating virtual environment... " > $BASEDIR/environment.log
   set +e
   (cd $BASEDIR; ./mkenv.sh hwimobuild) > $BASEDIR/environment.log 2>&1
   if [ $? != 0 ]
@@ -45,7 +45,7 @@ then
     fi
     exit 1
   fi
-  echo 'done!'
+  echo 'done!' > $BASEDIR/environment.log
 fi
 
 source $BASEDIR/env/hwimobuild/bin/activate
