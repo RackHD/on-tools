@@ -6,67 +6,67 @@
         {
             "branch": "", 
             "commit-id": "",
-            "repository": "https://github.com/PengTian0/on-core.git"
+            "repository": "https://github.com/RackHD/on-core.git"
         }, 
         {
             "branch": "", 
             "commit-id": "",
-            "repository": "https://github.com/PengTian0/on-dhcp-proxy.git"
+            "repository": "https://github.com/RackHD/on-dhcp-proxy.git"
         }, 
         {
             "branch": "", 
             "commit-id": "",
-            "repository": "https://github.com/PengTian0/on-http.git"
+            "repository": "https://github.com/RackHD/on-http.git"
         }, 
         {
             "branch": "", 
             "commit-id": "",
-            "repository": "https://github.com/PengTian0/on-syslog.git"
+            "repository": "https://github.com/RackHD/on-syslog.git"
         }, 
         {
             "branch": "", 
             "commit-id": "",
-            "repository": "https://github.com/PengTian0/on-taskgraph.git"
+            "repository": "https://github.com/RackHD/on-taskgraph.git"
         }, 
         {
             "branch": "", 
             "commit-id": "",
-            "repository": "https://github.com/PengTian0/on-tasks.git"
+            "repository": "https://github.com/RackHD/on-tasks.git"
         }, 
         {
             "branch": "", 
             "commit-id": "",
-            "repository": "https://github.com/PengTian0/on-tftp.git"
+            "repository": "https://github.com/RackHD/on-tftp.git"
         }, 
         {
             "branch": "", 
             "commit-id": "",
-            "repository": "https://github.com/PengTian0/on-skupack.git"
+            "repository": "https://github.com/RackHD/on-skupack.git"
         }, 
         {
             "branch": "", 
             "commit-id": "",
-            "repository": "https://github.com/PengTian0/di.js.git"
+            "repository": "https://github.com/RackHD/di.js.git"
         }, 
         {
             "branch": "", 
             "commit-id": "",
-            "repository": "https://github.com/PengTian0/RackHD.git"
+            "repository": "https://github.com/RackHD/RackHD.git"
         }, 
         {
             "branch": "", 
             "commit-id": "",
-            "repository": "https://github.com/PengTian0/on-imagebuilder.git"
+            "repository": "https://github.com/RackHD/on-imagebuilder.git"
         },
         {
             "branch": "", 
             "commit-id": "",
-            "repository": "https://github.com/PengTian0/on-wss.git"
+            "repository": "https://github.com/RackHD/on-wss.git"
         },
         {
             "branch": "", 
             "commit-id": "",
-            "repository": "https://github.com/PengTian0/on-statsd.git"
+            "repository": "https://github.com/RackHD/on-statsd.git"
         }
     ]
 }

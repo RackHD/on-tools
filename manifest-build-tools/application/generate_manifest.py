@@ -2,7 +2,7 @@
 # Copyright 2016, DELLEMC, Inc.
 
 """
-The script generate a new manifest for a new branch according to another manifest
+The script generate a new manifest with the commit before a specified date of the specified branch of each repository
 
 usage:
 ./on-tools/manifest-build-tools/HWIMO-BUILD on-tools/manifest-build-tools/application/generate_manifest.py \
