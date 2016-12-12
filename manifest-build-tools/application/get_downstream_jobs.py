@@ -88,8 +88,8 @@ def is_error_response(res):
     """
     check the status code of http response
     :param res: http response
-    :return: True if the status code less than 200 or larger than 206;
-             False if the status code is between 200 and 206
+    :return: True if the status code less than 200 or larger than 299;
+             False if the status code is between 200 and 299
     """
     if res is None:
         return True
