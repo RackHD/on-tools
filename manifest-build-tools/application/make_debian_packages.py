@@ -7,10 +7,9 @@ This program build debian packages for repositories
 which checked out based on the given manifest file.
 
 Usage:
-./on-tools/manifest-build-tools/HWIMO-BUILD on-tools/manifest-build-tools/application/make-debian-release.py \
+./on-tools/manifest-build-tools/HWIMO-BUILD on-tools/manifest-build-tools/application/make_debian_packages.py \
 --build-directory b/ \
---manifest-name rackhd-devel \
---manifest-repo build-manifests/ \
+--manifest-file rackhd-devel \
 --git-credential https://github.com,GITHUB \
 --jobs 8 \
 --is-official-release true\
@@ -20,9 +19,7 @@ Usage:
 
 The required parameters:
 build-directory: A directory where all the repositories are cloned to. 
-manifest-name: The name of a manifest file. 
-               All the repositories are cloned based on the manifest file.
-manifest-repo: The directory of manifest repository
+manifest-file: The path of manifest file. 
 git-credential: Git URL and credential for CI services: <URL>,<Credentials>
 
 The optional parameters:
@@ -43,7 +40,7 @@ import json
 
 try:
     from reprove import ManifestActions
-    from update_rackhd_version import RackhdDebianControlUpdater
+    from update_dependencies import RackhdDebianControlUpdater
     from version_generator import VersionGenerator
     from DebianBuilder import DebianBuilder
     import common
