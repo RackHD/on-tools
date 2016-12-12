@@ -2,12 +2,13 @@
 # Copyright 2016, DELLEMC, Inc.
 
 """
-The script generate a new manifest with the commit before a specified date of the specified branch of each repository
+The script generate a new manifest for a new branch according to another manifest
 
 usage:
 ./on-tools/manifest-build-tools/HWIMO-BUILD on-tools/manifest-build-tools/application/generate_manifest.py \
 --branch master \
 --date "$date" \
+--timezone "+0800" \
 --builddir b \
 --force \
 --git-credential https://github.com,GITHUB \
@@ -20,6 +21,7 @@ date: The commit of each repository are last commit before the date.
                       yesterday (the commit of each repository are the last commit of yesterday")
                       date string, such as: 2016-12-01 00:00:00 (the commit of each repository are the last commit before the date")
 
+timezone: The Time Zone for the date, such as: +0800, -0800, -0500
 git-credential: Git credentials for CI services.
 builddir: The directory for checked repositories.
 
@@ -55,6 +57,12 @@ def parse_command_line(args):
                          default="current",
                          required=True,
                          help="Generate a new manifest with commit before the date, such as: current, yesterday, 2016-12-13 00:00:00",
+                         action="store")
+
+    parser.add_argument("--timezone",
+                         default="+0800",
+                         required=True,
+                         help="The time zone for parameter date",
                          action="store")
 
     parser.add_argument("--builddir",
@@ -106,7 +114,7 @@ def main():
             dt = convert_date(args.date)
             date_str = dt.strftime("%Y%m%d")
             dest_manifest = "{branch}-{date}".format(branch=args.branch, date=date_str)
-            date_str = dt.strftime("%Y-%m-%d %H:%M:%S")
+            date_str = "{0} {1}".format(dt.strftime("%Y-%m-%d %H:%M:%S"), args.timezone)
             generator = SpecifyDayManifestGenerator(dest_manifest, args.branch, date_str, args.builddir, args.git_credential, jobs=args.jobs, force=args.force)
             
         generator.update_manifest()
