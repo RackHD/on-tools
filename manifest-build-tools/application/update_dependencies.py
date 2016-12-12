@@ -3,7 +3,7 @@
 
 """
 usage:
-./on-tools/manifest-build-tools/HWIMO-BUILD on-tools/manifest-build-tools/application/update_rackhd_version.py \
+./on-tools/manifest-build-tools/HWIMO-BUILD on-tools/manifest-build-tools/application/update_dependencies.py \
 --manifest rackhd-devel \
 --builddir b \
 --force \
