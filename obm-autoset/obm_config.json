@@ -1,0 +1,23 @@
+{ "ora": {
+        "username": "vagrant",
+        "password": "vagrant"
+      },
+  "bmc": [
+      {
+        "username": "admin",
+        "password": "admin"
+      },
+      {
+        "username": "root",
+        "password": "1234567"
+      }
+    ],
+	"api": {
+      "admin_user": "admin",
+      "admin_pass": "admin123"
+     },
+    "ports": {
+    "http": 8080,
+    "https": 8443
+  }
+}
