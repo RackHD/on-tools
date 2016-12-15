@@ -28,7 +28,3 @@ messenger.start().then(function () {
 }).catch(function (error) {
     console.log(error);
 });
-
-process.on('SIGINT', function () {
-    messenger.stop();
-});
