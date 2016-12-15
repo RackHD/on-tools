@@ -12,6 +12,7 @@ usage:
     --atlas-username rackhd \
     --atlas-name rackhd \
     --atlas-token ****** \
+    --atlas-version 1.2.3 \
     --is-release true
 
 The required parameters:
@@ -23,12 +24,14 @@ The optional parameters:
     atlas-url: Base URL for Atlas, default: https://atlas.hashicorp.com/api/v1
     atlas-username: The account name of atlas, default: rackhd
     atlas-name: The box name under a specific account of atlas, default: rackhd
-
+    atlas-version: The box version in atlas, default: version number when is_release
+                   0.month.day when is ci_builds.
 """
 
 import sys
 import argparse
 import requests
+import subprocess
 
 try:
     import common
@@ -50,10 +53,11 @@ class Atlas(object):
         self.box = "/".join(["box", self.atlas_username, self.atlas_name])
 
         self.atlas_token = atlas_token
+
         self.session = requests.Session()
         self.session.headers.update({'X-Atlas-Token': self.atlas_token})
 
-    def upload_one_box(self, atlas_version, provider, box_file):
+    def upload_handler(self, atlas_version, provider, box_file):
         """
         Upload a box file to atlas.
         See https://vagrantcloud.com/help/vagrant/boxes/create for more details
@@ -71,7 +75,8 @@ class Atlas(object):
         Create box version
         """
         create_version_url = self.generate_url("create_version")
-        version_data = {'version': {'version': atlas_version}}
+        version_data = {'version[version]': atlas_version}
+        print create_version_url
         resp = self.session.post(create_version_url, data=version_data)
         if resp.ok:
             print "Create box version {0} successfully.".format(atlas_version)
@@ -84,31 +89,30 @@ class Atlas(object):
         Create box provider of a specific version
         """
         create_provider_url = self.generate_url("create_provider", atlas_version)
-        provider_data = {'provider': {'name': provider}}
+        provider_data = {'provider[name]': provider}
         resp = self.session.post(create_provider_url, data=provider_data)
         if resp.ok:
             print "Create box provider {0} of version {1} successfully.".format(provider, atlas_version)
         else:
-            print "Failed to create box version.\n {0}".format(resp.text)
+            print "Failed to create box provider.\n {0}".format(resp.text)
             sys.exit(1)
 
     def upload_box(self, atlas_version, provider, box_file):
         """
         Upload one box to a specific version/provider
         """
-        upload_box_url = self.generate_url("upload_url", atlas_version, provider)
+        upload_box_url = self.generate_url("upload_box", atlas_version, provider)
         resp = self.session.get(upload_box_url)
         if resp.ok:
             upload_path = resp.json()["upload_path"]
-            with open(box_file, 'rb') as f:
-                files = {'file': f}
-                resp = self.session.put(upload_path, files=files)
-                if resp.ok:
-                    print "Upload box {0} to version/{1}/provider/{2} successfully!".format(box_file, atlas_version, provider)
-                else:
-                    print "Failed to Upload box {0} to version/{1}/provider/{2}!".format(box_file, atlas_version, provider)
-                    sys.exit(1)
-
+            cmd = "curl -X PUT --upload-file " +  box_file  + " " +  upload_path
+            p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+            retval = p.wait()
+            if retval == 0 :
+                print "Upload box {0} to version/{1}/provider/{2} successfully!".format(box_file, atlas_version, provider)
+            else:
+                print "Failed to Upload box {0} to version/{1}/provider/{2}!\n {3}".format(box_file, atlas_version, provider,retval)
+                sys.exit(1)
 
     def version_exist(self, atlas_version):
         """
@@ -179,6 +183,10 @@ def parse_args(args):
                         help="atlas access token",
                         action='store')
 
+    parser.add_argument('--atlas-version',
+                        help="atlas access token",
+                        action='store')
+
     parser.add_argument('--is-release',
                         help="if this is a step of rlease build",
                         default=False,
@@ -187,7 +195,7 @@ def parse_args(args):
     parsed_args = parser.parse_args(args)
     return parsed_args
 
-def upload_boxs(build_directory, atlas, is_release):
+def upload_boxs(build_directory, atlas, is_release, atlas_version):
     """
     The function will walk through all sub-folder under $build_directory, and for every *.box found:
         1. retrieve its version
@@ -203,18 +211,17 @@ def upload_boxs(build_directory, atlas, is_release):
     if len(box_files) == 0:
         print "No box found under {0}".format(build_directory)
 
-    from datetime import datetime
-    datatime_now_md = datetime.utcnow().strftime("0.%m.%d")
-
     for full_file_path in box_files:
-        if is_release:
-            # Box file name is like "rackhd-ubuntu-14.04-1.2.3-20161207024UTC.box"
-            # Extract 1.2.3-20161207024UTC only
-            atlas_version = "-".join(full_file_path.split('/')[-1:][0].strip(".box").split('-')[3:])
-        else:
-            atlas_version = datatime_now_md
-
-        atlas.upload_one_box(atlas_version, "virtualbox", full_file_path)
+        if not atlas_version:
+            if is_release:
+                # Box file name is like "rackhd-ubuntu-14.04-1.2.3-20161207024UTC.box"
+                # Extract 1.2.3-20161207024UTC only
+                atlas_version = "-".join(full_file_path.split('/')[-1:][0].strip(".box").split('-')[3:])
+            else:
+                from datetime import datetime
+                datatime_now_md = datetime.utcnow().strftime("0.%m.%d")
+                atlas_version = datatime_now_md
+        atlas.upload_handler(atlas_version, "virtualbox", full_file_path)
 
 def main():
     """
@@ -222,10 +229,11 @@ def main():
     """
     try:
         args = parse_args(sys.argv[1:])
-        if args.is_release == "true" or args.is_release:
+        is_release = False
+        if args.is_release == "true" or args.is_release == "True":
             is_release = True
         atlas = Atlas(args.atlas_url, args.atlas_username, args.atlas_name, args.atlas_token)
-        upload_boxs(args.build_directory, atlas, is_release)
+        upload_boxs(args.build_directory, atlas, is_release, args.atlas_version)
     except Exception, e:
         print e
         sys.exit(1)
