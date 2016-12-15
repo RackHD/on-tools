@@ -4,3 +4,4 @@ pyjavaproperties==0.6
 deb_pkg_tools
 python-dateutil
 requests
+pyjavaproperties
