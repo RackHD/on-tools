@@ -2,7 +2,11 @@
 # Copyright 2016, DELLEMC, Inc.
 
 """
-The script generate a new manifest for a new branch according to another manifest
+The script generate a new manifest for a new branch according to another manifest.
+For example, 
+new branch: release/branch-1.2.3
+date: 2016-12-15 00:00:00
+The generated new manifest: branch-1.2.3-20161215
 
 usage:
 ./on-tools/manifest-build-tools/HWIMO-BUILD on-tools/manifest-build-tools/application/generate_manifest.py \
@@ -104,16 +108,16 @@ def main():
     try:
         # parse arguments
         args = parse_command_line(sys.argv[1:])
-        
+        slice_branch = args.branch.split("/")[-1]
         if args.date == "current":
             utc_now = datetime.utcnow()
-            date_str = utc_now.strftime("%Y%m%d")
-            dest_manifest = "{branch}-{date}".format(branch=args.branch, date=date_str)
+            day_str = utc_now.strftime("%Y%m%d")
+            dest_manifest = "{branch}-{day}".format(branch=slice_branch, day=day_str)
             generator = ManifestGenerator(dest_manifest, args.branch, args.builddir, args.git_credential, jobs=args.jobs, force=args.force)
         else:
             dt = convert_date(args.date)
-            date_str = dt.strftime("%Y%m%d")
-            dest_manifest = "{branch}-{date}".format(branch=args.branch, date=date_str)
+            day_str = dt.strftime("%Y%m%d")
+            dest_manifest = "{branch}-{day}".format(branch=slice_branch, day=day_str)
             date_str = "{0} {1}".format(dt.strftime("%Y-%m-%d %H:%M:%S"), args.timezone)
             generator = SpecifyDayManifestGenerator(dest_manifest, args.branch, date_str, args.builddir, args.git_credential, jobs=args.jobs, force=args.force)
             
