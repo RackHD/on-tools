@@ -124,4 +124,4 @@ class SpecifyDayManifestGenerator(ManifestGenerator):
     def update_repositories_commit(self, repositories):
         for repo in repositories:
             repo_dir = self.directory_for_repo(repo)
-            repo["commit-id"] = self.repo_operator.get_lastest_commit_before_date(repo_dir,self._date)
+            repo["commit-id"] = self.repo_operator.get_lastest_merge_commit_before_date(repo_dir,self._date)
