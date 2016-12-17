@@ -25,41 +25,28 @@ except IOError:
           "\nUse: 'pip install pexpect'\nExiting...\n"
     exit(1)
 
-# Check if CI_TOOLS_PATH environment variable is set.  If not, take a stab that the
-# test-tools stash repository is located at same level as tests repository in the user environment
-# _no_tools_repository = False
-# _path_add = os.environ.get('CI_TOOLS_PATH',"../../test-tools")
-# sys.path.append(_path_add)
-# try:
-#     import reporter
-#     import reporter.utils
-# except ImportError:
-#     _no_tools_repository = True
+
 
 
 # Standard imports
 import json
 import argparse
 import subprocess
-import time, datetime
+import time
 import sys
-import unittest
-import signal
 import argparse
 #Load OBM config file
 try:
     OBM_CONFIG = json.loads(open("obm_config.json").read())
 except:
-    print "**** Global Config file: " + "global_config.json" + " missing or corrupted! Exiting...."
+    print "**** Config file: " + "obm_config.json" + " missing or corrupted! Exiting...."
     sys.exit(255)
 
 
 def get_auth_token():
     # This is run once to get an auth token which is set to global AUTH_TOKEN and used for rest of session
     global AUTH_TOKEN
-    global REDFISH_TOKEN
     api_login = {"username": OBM_CONFIG["api"]["admin_user"], "password": OBM_CONFIG["api"]["admin_pass"]}
-    redfish_login = {"UserName": OBM_CONFIG["api"]["admin_user"], "Password": OBM_CONFIG["api"]["admin_pass"]}
     try:
         restful("https://" + arg_ora  + ":" + str(API_PORT) +
                        "/login", rest_action="post", rest_payload=api_login, rest_timeout=2)
@@ -71,13 +58,7 @@ def get_auth_token():
                            "/login", rest_action="post", rest_payload=api_login, rest_timeout=2)
         if api_data['status'] == 200:
             AUTH_TOKEN = str(api_data['json']['token'])
-            redfish_data = restful("https://" + arg_ora + ":" + str(API_PORT) +
-                               "/redfish/v1/SessionService/Sessions", rest_action="post", rest_payload=redfish_login, rest_timeout=2)
-            if 'x-auth-token' in redfish_data['headers']:
-                REDFISH_TOKEN =  redfish_data['headers']['x-auth-token']
-                return True
-            else:
-                print "WARNING: Redfish API token not available."
+
         else:
             AUTH_TOKEN = "Unavailable"
             return False
@@ -281,11 +262,11 @@ def node_select():
         nodelist.append(NODEID)
         return nodelist
     else:
-        catalog = rackhdapi('/api/2.0/nodes')
-        if catalog['status'] != 200:
+        response = rackhdapi('/api/2.0/nodes')
+        if response['status'] != 200:
             print '**** Unable to retrieve node list via API.\n'
             sys.exit(255)
-        for nodeentry in catalog['json']:
+        for nodeentry in response['json']:
            if nodeentry['type'] == 'compute':
                nodelist.append(nodeentry['id'])
     if VERBOSITY >= 6:
@@ -335,16 +316,15 @@ else:
 NODECATALOG = node_select()
 
 for NODE in NODECATALOG:
-    if rackhdapi('/api/2.0/nodes/' + NODE)['json']['name'] != "Management Server":
-        print 'Checking OBM setting on node :'+NODE
-        node_obm= rackhdapi('/api/2.0/nodes/'+NODE)['json']['obms']
-        if node_obm==[]:
-           assert apply_obmsetting(NODE) is True,"Fail to apply obm setting!"
-           #Verify the OBM setting
-           node_obm_check = rackhdapi('/api/2.0/nodes/' + NODE)['json']['obms']
-           if node_obm_check==[]:
-               print "Fail to apply OBM setting on Node: "+ NODE
-           else:
-               print "Successfully set OBM setting on Node: " + NODE
-        else:
-            print "Node "+NODE+" already have OBM setting."
+    print 'Checking OBM setting on node :'+NODE
+    node_obm= rackhdapi('/api/2.0/nodes/'+NODE)['json']['obms']
+    if node_obm==[]:
+       assert apply_obmsetting(NODE) is True,"Fail to apply obm setting!"
+       #Verify the OBM setting
+       node_obm_check = rackhdapi('/api/2.0/nodes/' + NODE)['json']['obms']
+       if node_obm_check==[]:
+           print "Fail to apply OBM setting on Node: "+ NODE
+       else:
+           print "Successfully set OBM setting on Node: " + NODE
+    else:
+        print "Node "+NODE+" already have OBM setting."
