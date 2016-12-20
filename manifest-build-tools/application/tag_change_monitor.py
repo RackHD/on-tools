@@ -12,11 +12,16 @@ usage:
     --repo rackhd/on-http \
     --history_file workspace/on-http_tag_history
     --property_file workspace/property_file
+    --credential CREDS
 
 The required parameters:
     repo: user_name/repo_name that indicates which repo should be monitoring.
     history_file: A file stored one history tag in each line. If doesn't exists it will be created.
     property_file: A file used for downstream job.
+
+The optional parameters:
+    credential, A env var name which stores user:password of github.
+    If you run this scipt continually this parameter is needed, otherwise github will forbidden the api requests.
 """
 
 import os
@@ -29,11 +34,16 @@ class TagChangeMonitor(object):
     A simple class that monitor repo tag updates.
     One monitor for one repo.
     """
-    def __init__(self, repo, history_file, property_file):
+    def __init__(self, repo, history_file, property_file, credential):
         self.api_url = "https://api.github.com"
         self.repo = repo
         self.history_file = history_file
         self.property_file = property_file
+        if credential:
+            user, password = os.environ[credential].split(':')
+            self.auth = (user, password)
+        else:
+            self.auth = ()
 
         self.history = {}
         self.new_history = {}
@@ -65,7 +75,10 @@ class TagChangeMonitor(object):
         Get all tags of current repo.
         """
         list_tag_url = "/".join([self.api_url, "repos", self.repo, "tags"])
-        resp = requests.get(list_tag_url)
+        if self.auth:
+            resp = requests.get(list_tag_url, auth=self.auth)
+        else:
+            resp = requests.get(list_tag_url)
         if resp.ok:
             return resp.json()
         else:
@@ -135,11 +148,17 @@ def parse_args(args):
                         action='store')
 
     parser.add_argument('--history_file',
+                        required=True,
                         help="File stored tag history",
                         action='store')
 
     parser.add_argument('--property_file',
+                        required=True,
                         help="Downstream file to use",
+                        action='store')
+
+    parser.add_argument('--credential',
+                        help="github credits",
                         action='store')
 
     parsed_args = parser.parse_args(args)
@@ -152,7 +171,7 @@ def main():
     """
     try:
         args = parse_args(sys.argv[1:])
-        tcm = TagChangeMonitor(args.repo, args.history_file, args.property_file)
+        tcm = TagChangeMonitor(args.repo, args.history_file, args.property_file, args.credential)
         tcm.handle_tag_monitor()
     except Exception, e:
         print e
