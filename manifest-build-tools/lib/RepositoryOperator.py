@@ -123,7 +123,7 @@ class RepoCloner(ParallelTasks):
         if repo.has_key('lfs') and repo['lfs']:
             command = ['lfs', 'clone']
 
-        if 'branch' in repo:
+        if 'branch' in repo and repo['branch'] != "":
             command.extend(['-b', repo['branch']])
 
         command.append(repo_url)
