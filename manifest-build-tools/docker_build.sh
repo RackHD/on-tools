@@ -37,7 +37,7 @@ tagCalculate() {
         PKG_TAG="$CHANGELOG_VERSION"
     else
         GIT_COMMIT_DATE=$(git show -s --pretty="format:%ci")
-        DATE_STRING="$(date -d "$GIT_COMMIT_DATE" -u +"%Y%m%d%H%M%SZ")UTC"
+        DATE_STRING="$(date -d "$GIT_COMMIT_DATE" -u +"%Y%m%d%H%M%S")UTC"
         GIT_COMMIT_HASH=$(git show -s --pretty="format:%h")
         PKG_TAG="$CHANGELOG_VERSION-$DATE_STRING-$GIT_COMMIT_HASH"
     fi
