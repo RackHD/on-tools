@@ -46,11 +46,32 @@ class Bintray(object):
         self._subject = subject
         self._repo = repo
         self._push_executable = push_executable
-        self._component = None
-        self._distribution = None
-        self._architecture = None
         for key, value in kwargs.items():
             setattr(self, key, value)
+
+    @property
+    def component(self):
+        return self._component
+
+    @component.setter
+    def component(self, component):
+        self._component = component
+
+    @property
+    def distribution(self):
+        return self._distribution
+
+    @distribution.setter
+    def distribution(self, distribution):
+        self._distribution = distribution
+
+    @property
+    def architecture(self):
+        return self._architecture
+
+    @architecture.setter
+    def architecture(self, architecture):
+        self._architecture = architecture
 
     def upload_a_file(self, package, version, file_path):
         """
