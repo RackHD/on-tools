@@ -31,7 +31,6 @@
 ############################################
 
 set -e
-set -x
 
 while [ "$1" != "" ];do
     case $1 in
@@ -200,9 +199,13 @@ deploy_package() {
     echo "Publishing ${PACKAGE_PATH}..."
     if [ $(${CURL} --write-out %{http_code} --silent --output /dev/null -X POST ${BINTRAY_API}/content/${BINTRAY_SUBJECT}/${BINTRAY_REPO}/${BINTRAY_PCK}/${BINTRAY_PCK_VERSION}/publish) -eq "200" ]; then
       echo "Package ${PACKAGE_PATH} published"
+      return 0
     else
       echo "Failed to publish your package ${PACKAGE_PATH}"
+      return 1
     fi
+  else
+      return 1
   fi
 }
 
