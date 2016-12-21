@@ -221,8 +221,10 @@ def write_downstream_parameter_file(build_directory, manifest_file, is_official_
         manifest = Manifest(manifest_file)
         rackhd_commit = ''
         for repo in manifest.repositories:
-            if repo['repository'].endswith('RackHD') or repo['repository'].endswith('RackHD.git'):
+            repository = repo['repository'].lower()
+            if repository.endswith('rackhd') or repository.endswith('rackhd.git'):
                 rackhd_commit = repo['commit-id']
+
         if rackhd_commit != '':
             params['RACKHD_COMMIT'] = rackhd_commit
         else:
