@@ -17,7 +17,12 @@ usage:
 The required parameters:
     repo: user_name/repo_name that indicates which repo should be monitoring.
     history_file: A file stored one history tag in each line. If doesn't exists it will be created.
-    property_file: A file used for downstream job.
+    property_file: A file used for downstream job. It's format is like this:
+                  tag_name=release/1.2.3
+                  commit=fb47e10......
+                  repository=https://github.com/RackHD/......
+                  Contains the newly added tags (comparing with the $hsitory_file), with those tags' 
+                  corresponding commit/repository"
 
 The optional parameters:
     credential, A env var name which stores user:password of github.
@@ -124,7 +129,8 @@ class TagChangeMonitor(object):
 
     def write_property_file(self):
         """
-        write property file for downstream job
+        For those tags "newly" detected for this run, write those tags' 
+        information into a property file ( being used by downstream Jenkins job )
         """
         with file(self.property_file, 'w') as property_file_handler:
             for commit, tags in self.change.iteritems():
