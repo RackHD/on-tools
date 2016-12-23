@@ -387,8 +387,10 @@ class ManifestActions(object):
                         new_url = os.path.abspath(repo['directory-name'])
                         return new_url
         else:
-            new_url = "git+{url}#{pkg_version}".format(url=new_url, pkg_version=pkg_version)
-            return new_url
+            for repo in self._manifest.repositories:
+                if new_url == repo['repository']:
+                    new_url = "git+{url}#{pkg_version}".format(url=new_url, pkg_version=pkg_version)
+                    return new_url
 
         return version
 
