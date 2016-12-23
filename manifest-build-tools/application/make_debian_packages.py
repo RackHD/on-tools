@@ -40,6 +40,7 @@ import json
 
 try:
     from reprove import ManifestActions
+    from manifest import Manifest
     from update_dependencies import RackhdDebianControlUpdater
     from version_generator import VersionGenerator
     from DebianBuilder import DebianBuilder
@@ -204,7 +205,7 @@ def build_debian_packages(build_directory, jobs, is_official_release, sudo_creds
         print "Failed to build debian packages under {0} \ndue to {1}, Exiting now".format(build_directory, e)
         sys.exit(1)
 
-def write_downstream_parameter_file(build_directory, is_official_release, parameter_file):
+def write_downstream_parameter_file(build_directory, manifest_file, is_official_release, parameter_file):
     try:
         params = {}
 
@@ -217,10 +218,24 @@ def write_downstream_parameter_file(build_directory, is_official_release, parame
         else:
             raise RuntimeError("Version of {0} is None. Maybe the repository doesn't contain debian directory ".format(rackhd_repo_dir))
 
+        # Add the commit of repository RackHD/RackHD to downstream parameters
+        manifest = Manifest(manifest_file)
+        # commit of repository RackHD/RackHD
+        rackhd_commit = ''
+        for repo in manifest.repositories:
+            repository = repo['repository'].lower()
+            if repository.endswith('rackhd') or repository.endswith('rackhd.git'):
+                rackhd_commit = repo['commit-id']
+
+        if rackhd_commit != '':
+            params['RACKHD_COMMIT'] = rackhd_commit
+        else:
+            raise RuntimeError("commit-id of RackHD is None. Please check the manifest {0}".format(manifest_file))
+            
         # Write downstream parameters to downstream parameter file.
         common.write_parameters(parameter_file, params)
     except Exception, e:
-        raise RuntimeError("Failed to generate version file for {0} \ndue to {1}".format(repo_dir, e))
+        raise RuntimeError("Failed to write downstream parameter file \ndue to {0}".format(e))
 
 def main():
     """
@@ -230,7 +245,7 @@ def main():
     args = parse_args(sys.argv[1:])
     checkout_repos(args.manifest_file, args.build_directory, args.force, args.git_credential, args.jobs)
     build_debian_packages(args.build_directory, args.jobs, args.is_official_release, args.sudo_credential)
-    write_downstream_parameter_file(args.build_directory, args.is_official_release, args.parameter_file)
+    write_downstream_parameter_file(args.build_directory, args.manifest_file, args.is_official_release, args.parameter_file)
 
 if __name__ == '__main__':
     main()
