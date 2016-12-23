@@ -218,7 +218,9 @@ def write_downstream_parameter_file(build_directory, manifest_file, is_official_
         else:
             raise RuntimeError("Version of {0} is None. Maybe the repository doesn't contain debian directory ".format(rackhd_repo_dir))
 
+        # Add the commit of repository RackHD/RackHD to downstream parameters
         manifest = Manifest(manifest_file)
+        # commit of repository RackHD/RackHD
         rackhd_commit = ''
         for repo in manifest.repositories:
             repository = repo['repository'].lower()
