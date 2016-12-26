@@ -26,6 +26,7 @@
 # vagrant-post-test need some special parameter of boxFile and controlNetwork name
 # --boxFile ./someDir/some.box
 # --controlNetwork vmnet*
+# --
 #
 # docker-post-test need some special parameter of docker build record file and cloned RackHD repo
 # --RackHDDir ./someDir/RackHD
@@ -99,13 +100,16 @@ done
 findRackHDService() {
     case $type in
         ova)
+        # ova northPort default to 8080
         api_test_result=`ansible ova-for-post-test -a "wget --retry-connrefused --waitretry=1 --read-timeout=20 --timeout=15 -t 1 --continue localhost:8080/api/2.0/nodes"`
         echo $api_test_result | grep "$service_normal_sentence" > /dev/null  2>&1
         ;;
         docker)
+        # docker southPort default to 9080
         wget --retry-connrefused --waitretry=1 --read-timeout=20 --timeout=15 -t 1 --continue http://172.31.128.1:9080/api/2.0/nodes
         ;;
         vagrant)
+        # Vagrantfile northPort default to 9090
         curl 127.0.0.1:9090/api/2.0/nodes
         ;;
     esac
@@ -201,9 +205,9 @@ post_test_docker() {
         done
         docker-compose -f docker-compose-mini.yml pull --ignore-pull-failures
         docker-compose -f docker-compose-mini.yml up -d
+        mv docker-compose-mini.yml.bak docker-compose-mini.yml
         waitForAPI
         clean_all_containers
-        mv docker-compose-mini.yml.bak docker-compose-mini.yml
     done < $buildRecord
 }
 
