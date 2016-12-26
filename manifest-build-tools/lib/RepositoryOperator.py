@@ -108,7 +108,7 @@ class RepoCloner(ParallelTasks):
         results['commands'] = []
         commands = results['commands']
         git = GitBit(verbose=False)
-        if 'credentials' in data:
+        if 'credentials' in data and data['credentials'] is not None:
             for credential in data['credentials']:
                 url, cred = credential.split(',', 2)
                 git.add_credential_from_variable(url, cred)

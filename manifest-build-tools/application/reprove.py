@@ -96,7 +96,7 @@ class ManifestActions(object):
 
     def get_force(self):
         """
-        Standard getter for git_credentials
+        Standard getter for force
         :return: force
         """
         return self._force
@@ -104,7 +104,7 @@ class ManifestActions(object):
     
     def set_branch_name(self, branch):
         """
-        Standard setter for force
+        Standard setter for branch_name
         :param force: if true, overwrite a directory if it exists
         :return: None
         """
@@ -112,7 +112,7 @@ class ManifestActions(object):
 
     def get_branch_name(self):
         """
-        Standard getter for git_credentials
+        Standard getter for branch_name
         :return: force
         """
         return self._branch_name
@@ -146,6 +146,9 @@ class ManifestActions(object):
                 print "  {0}".format(op)
             sys.exit(1)
         else:
+            if action == "branch" and self._git_credentials == None:
+                print "Must Specify git_credentials when try to create branch"
+                sys.exit(1)
             self.actions.append(action)
 
     def set_jobs(self, jobs):
@@ -437,7 +440,6 @@ def parse_command_line(args):
                         help="use destination dir, even if it exists",
                         action="store_true")
     parser.add_argument("--git-credential",
-                        required=True,
                         help="Git credentials for CI services",
                         action="append")
     parser.add_argument("--branch-name",
