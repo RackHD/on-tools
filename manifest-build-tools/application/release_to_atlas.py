@@ -180,11 +180,12 @@ def parse_args(args):
                         action='store')
 
     parser.add_argument('--atlas-token',
+                        required=True,
                         help="atlas access token",
                         action='store')
 
     parser.add_argument('--atlas-version',
-                        help="atlas access token",
+                        help="set box version in atlas",
                         action='store')
 
     parser.add_argument('--is-release',
@@ -214,9 +215,9 @@ def upload_boxs(build_directory, atlas, is_release, atlas_version):
     for full_file_path in box_files:
         if not atlas_version:
             if is_release:
-                # Box file name is like "rackhd-ubuntu-14.04-1.2.3-20161207024UTC.box"
-                # Extract 1.2.3-20161207024UTC only
-                atlas_version = "-".join(full_file_path.split('/')[-1:][0].strip(".box").split('-')[3:])
+                # Box file name is like "rackhd-ubuntu-14.04-1.2.3.box" when release.
+                # Extract 1.2.3 only
+                atlas_version = "-".join(full_file_path.split('/')[-1:][0].strip(".box").split('-')[4])
             else:
                 from datetime import datetime
                 datatime_now_md = datetime.utcnow().strftime("0.%m.%d")
