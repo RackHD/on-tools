@@ -14,6 +14,7 @@
 # --adminGateway ***.***.***.***
 # --adminNetmask 255.255.255.0
 # --adminDNS ***.***.***.***
+# --net "ADMIN"="External Connection"
 # --datastore some-datastore
 # --deployName ova-for-post-test
 # --ovaFile /someDir/some.ova
@@ -29,7 +30,9 @@
 # docker-post-test need some special parameter of docker build record file and cloned RackHD repo
 # --RackHDDir ./someDir/RackHD
 # --buildRecord ./record_file
-#
+# A recorde_file contains repo:tag of all rackhd repos which build in one docker build, its format is like this:
+# repo1:tag1 repo2:tag2 ......
+# If build twice in one docker build job, the repos:tags of each build will be stored in each line
 ############################################
 
 set -x
@@ -51,6 +54,9 @@ while [ "$1" != "" ];do
         --adminDNS)
             shift
             adminDNS=$1;;
+        --net)
+            shift
+            net=$1;;
         --datastore)
             shift
             datastore=$1;;
@@ -133,7 +139,7 @@ deploy_ova() {
     echo yes | ovftool \
     --prop:adminIP=$adminIP  --prop:adminGateway=$adminGateway --prop:adminNetmask=$adminNetmask  --prop:adminDNS=$adminDNS \
     --overwrite --powerOffTarget --powerOn --skipManifestCheck \
-    --net:"ADMIN"="External Connection" \
+    --net:$net \
     --datastore=$datastore \
     --name=$deployName \
     ${ovaFile} \
