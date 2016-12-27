@@ -384,38 +384,23 @@ class Manifest(object):
         if self.update_downstream_jobs(self._downstream_jobs, repo_url, branch, commit):
             self._changed = True
 
-    def write_manifest_file(self, repo_dir, commit_message, file_path=None, dryrun=False):
+    def write_manifest_file(self, file_path=None, dryrun=False):
         """
         Add, commit, and push the manifest changes to the manifest repo.
-        :param repo_dir: String, The directory of the repository
-        :param commit_message: String, The commit message for command "git commit"
         :param file_path: String, The path to the temporary file.
                           If it is not set, the default value is self._file_path where manifest come from
         :param dry_run: If true, would not push changes
         :return:
+        """
+        self.dump_to_json_file(file_path)
+        return
+
+    def dump_to_json_file(self, file_path=None):
+        """
+        dump manifest json to a file
         """
         if file_path is None:
             file_path = self._file_path
 
         with open(file_path, 'w') as fp:
             json.dump(self._manifest, fp, indent=4, sort_keys=True)
-
-        status_code, status_out, status_error = self.gitbit.run(['status'], repo_dir)
-        add_code, add_out, add_error = self.gitbit.run(['add', '-u'], repo_dir)
-
-        if add_code != 0:
-            raise RuntimeError('Unable to add files for commiting.\n{0}\n{1}\n{2}}'.format\
-                                 (add_code, add_out, add_error))
-
-        commit_code, commit_out, commit_error = self.gitbit.run(['commit', '-m', commit_message], repo_dir)
-        if commit_code != 0:
-            raise RuntimeError('Unable to commit changes for pushing.\n{0}\n{1}\n{2}'.format\
-                                 (commit_code, commit_out, commit_error))
-
-        if not dryrun:
-            push_code, push_out, push_error = self.gitbit.run(['push'], repo_dir)
-            if push_code !=0:
-                raise RuntimeError('Unable to push changes.\n{0}\n{1}\n{2}'.format(push_code, push_out, push_error))
-        else:
-            print "Would push changes here if not for dry run"
-        return
