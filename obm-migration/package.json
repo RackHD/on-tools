@@ -7,6 +7,6 @@
   "dependencies": {
     "di": "git+https://github.com/RackHD/di.js.git",
     "lodash": "^3.10.1",
-    "on-core": "git+https://github.com/srinia6/on-core.git"
+    "on-core": "git+https://github.com/RackHD/on-core.git"
   }
 }
