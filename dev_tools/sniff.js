@@ -22,8 +22,9 @@ try {
 
 messenger.start().then(function () {
     messenger.subscribe(args[0], args[1], function (event, data) {
+        console.log('\n');
         console.log(data.deliveryInfo.routingKey);
-        console.log(event);
+        console.log(JSON.stringify(event, null, '  '));
     }).done();
 }).catch(function (error) {
     console.log(error);
