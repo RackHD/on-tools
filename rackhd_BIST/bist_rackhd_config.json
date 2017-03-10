@@ -1,0 +1,108 @@
+{
+    "configFile": [
+        "/opt/onrack/etc/monorail.json",
+        "/opt/monorail/config.json"
+    ],
+    "logPath": "/var/log/rackhd/",
+    "rackhdServices": [
+        "on-taskgraph",
+        "on-http",
+        "on-syslog",
+        "on-tftp",
+        "on-dhcp-proxy"
+    ],
+    "requiredServices": [
+        "mongodb",
+        "rabbitmq-server",
+        "isc-dhcp-server"
+    ],
+    "requiredStaticFiles": [
+        {
+            "dirPath": "on-tftp/static/tftp/",
+            "fileList": [
+                "monorail-efi32-snponly.efi",
+                "monorail.intel.ipxe",
+                "monorail-undionly.kpxe",
+                "undionly.kpxe",
+                "monorail-efi64-snponly.efi",
+                "monorail.ipxe",
+                "undionly.kkpxe"
+            ]
+        },
+        {
+            "dirPath": "on-http/static/http/common/",
+            "fileList": [
+                "vmlinuz-3.16.0-25-generic",
+                "base.trusty.3.16.0-25-generic.squashfs.img",
+                "discovery.overlay.cpio.gz",
+                "initrd.img-3.16.0-25-generic"
+            ]
+        }
+    ],
+    "sourceCodeRepo": "/var/renasar/",
+    "toolList": [
+        {
+            "getVersionCommand": ["rabbitmqctl", "status"],
+            "isRequired": true,
+            "name": "rabbitmq",
+            "version": {
+                "among": [],
+                "exclusive": [],
+                "max": "2.6.10",
+                "min": "2.6.10"
+            }
+        },
+        {
+            "getVersionCommand": ["mongo", "--version"],
+            "isRequired": true,
+            "name": "mongo"
+        },
+        {
+            "getVersionCommand": ["dhcpd", "--version"],
+            "isRequired": true,
+            "name": "isc-dhcp-server",
+            "redirect": true,
+            "version": {}
+        },
+        {
+            "getVersionCommand": ["ipmitool","-V"],
+            "isRequired": true,
+            "name": "ipmitool",
+            "version": {
+                "min": "1.8.13"
+            }
+        },
+        {
+            "getVersionCommand": ["node", "--version"],
+            "isRequired": true,
+            "name": "node",
+            "version": {
+                "max": "4.99.99",
+                "min": "4.0.0"
+            }
+        },
+        {
+            "getVersionCommand": ["snmpget", "-V"],
+            "isRequired": false,
+            "name": "snmp",
+            "redirect": true
+        },
+        {
+            "getVersionCommand": ["ansible", "--version"],
+            "isRequired": false,
+            "name": "ansible",
+            "version": {
+                "exclusive": ["2.1.0.0"],
+                "min": "2.0.0.0"
+            }
+        },
+        {
+            "getVersionCommand": ["/opt/dell/srvadmin/sbin/racadm", "version"],
+            "isRequired": false,
+            "name": "racadm",
+            "version": {
+                "among": ["7.4.0"]
+            }
+        }
+    ]
+}
