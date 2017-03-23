@@ -4,7 +4,6 @@
         "/api/current/nodes",
         "/api/current/pollers"
     ],
-    "logPath": "/var/log/rackhd/",
     "optionalStaticFiles": [
         {
             "dirPath": "on-http/static/http/common/",
@@ -17,5 +16,5 @@
             ]
         }
     ],
-    "sourceCodeRepo": "/home/onrack/src/"
+    "sourceCodeRepo": "/var/renasar/"
 }

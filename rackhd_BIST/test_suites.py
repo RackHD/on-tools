@@ -4,7 +4,7 @@
 # -*- coding: UTF-8 -*-
 
 """
-    RackHD build in self test suites
+    RackHD built-in self-test suites
     This document includes RackHD BIST test suites
 """
 
@@ -24,8 +24,8 @@ class RackhdServices(object):
     """
     RackHD services test suite
     """
-    def __init__(self, path=None):
-        self.source_code_path = path or CONFIGURATION.get("sourceCodeRepo")
+    def __init__(self):
+        self.source_code_path = CONFIGURATION.get("sourceCodeRepo")
         self.services = CONFIGURATION.get("rackhdServices")
         self.heartbeat_unavailable_flags = self.services[:]
         self.amqp_address = {"host": "localhost", "port": 5672}
@@ -40,7 +40,7 @@ class RackhdServices(object):
             description = "Check service {} version".format(service)
             commitStringPath = os.path.join(self.source_code_path, service, "commitstring.txt")
             result = utils.robust_open_file(commitStringPath)
-            Logger.record_command_result(description, result, "warning")
+            Logger.record_command_result(description, "warning", result)
 
     def __operate_regular_rackhd(self, operator):
         """
@@ -51,7 +51,7 @@ class RackhdServices(object):
             description = "{} RackHD service {}".format(operator.capitalize(), service)
             cmd = ["service", service, operator]
             result = utils.robust_check_output(cmd)
-            Logger.record_command_result(description, result, 'error')
+            Logger.record_command_result(description, 'error', result)
 
     def __operate_user_rackhd(self, operator):
         """
@@ -64,7 +64,7 @@ class RackhdServices(object):
                 os.chdir(os.path.join(self.source_code_path, service))
                 cmd = ["node index.js > /dev/null 2>&1 &"]  # RackHD services need run in background
                 result = utils.robust_check_output(cmd=cmd, shell=True)
-                Logger.record_command_result(description, result, 'error')
+                Logger.record_command_result(description, 'error', result)
         else:
             get_process_cmd = ['ps aux | grep node| grep index.js | sed "/grep/d"| ' \
                                'sed "/sudo/d" | awk \'{print $2}\' | sort -r -n']
@@ -74,7 +74,7 @@ class RackhdServices(object):
                 description = "Stop RackHD service {}".format(kid)
                 cmd = ["kill", "-9", kid]
                 result = utils.robust_check_output(cmd)
-                Logger.record_command_result(description, result, 'error')
+                Logger.record_command_result(description, 'error', result)
 
     def __operate_rackhd_services(self, operator):
         """
@@ -87,7 +87,7 @@ class RackhdServices(object):
         else:
             self.__operate_regular_rackhd(operator)
         description = "RackHD services {}ed".format(operator)
-        Logger.record_log_message(description, "", "info")
+        Logger.record_log_message(description, "info", "")
 
     def start_rackhd_services(self):
         """
@@ -116,7 +116,7 @@ class RackhdServices(object):
         description = "Connection to AMQP channels timeout"
         details = "Can't receive heartbeat messages from services {}".format(
             ", ".join(self.heartbeat_unavailable_flags))
-        Logger.record_log_message(description, details, "error")
+        Logger.record_log_message(description, "error", details)
 
     def run_heartbeat_test(self):
         """
@@ -144,12 +144,12 @@ class RackhdServices(object):
                     self.heartbeat_unavailable_flags.remove(service)
                 if not self.heartbeat_unavailable_flags:
                     description = "Hearbeat signals for RackHD services are healthy"
-                    Logger.record_log_message(description, "", "debug")
+                    Logger.record_log_message(description, "debug", "")
                     self.__close_amqp_connection()
                     break
         except pika.exceptions.ConnectionClosed:
             description = "Failed to connection to AMQP channels"
-            Logger.record_log_message(description, "", "error")
+            Logger.record_log_message(description, "error", "")
 
     def run_test(self):
         """
@@ -176,12 +176,6 @@ class RequiredServices(object):
             "deny duplicates": 'deny.*duplicates;'
         }
 
-    def upsert_dhcp_rackhd_config(self, key, value):
-        """
-        Update or insert dhcp RackHD configure items.
-        """
-        self.dhcp_rackhd_config[key] = value
-
     def check_service_process(self):
         """
         Check RackHD required services running status
@@ -196,7 +190,7 @@ class RequiredServices(object):
                     result["exit_code"] = -1
                 else:
                     result["message"] = ""  # message is not necessary for successful service
-            Logger.record_command_result(description, result, "error")
+            Logger.record_command_result(description, "error", result)
 
     def get_dhcp_ip_count(self):
         """
@@ -204,7 +198,7 @@ class RequiredServices(object):
         """
         if not (self.dhcp_ip_range["start_ip"] and self.dhcp_ip_range["end_ip"]):
             description = "Cann't get maximum IP count supported by DHCP configure"
-            Logger.record_log_message(description, "", "warning")
+            Logger.record_log_message(description, "warning", "")
             return
         begin_ip_bits = self.dhcp_ip_range["start_ip"].split('.')
         end_ip_bits = self.dhcp_ip_range["end_ip"].split('.')
@@ -212,7 +206,7 @@ class RequiredServices(object):
         for begin, end in zip(begin_ip_bits, end_ip_bits):
             ip_count = ip_count*256 + int(end) - int(begin)
         description = "Maximum IP count supported by DHCP configure is {}".format(ip_count + 1)
-        Logger.record_log_message(description, "", "info")
+        Logger.record_log_message(description, "info", "")
 
     def validate_dhcp_config(self):
         """
@@ -221,7 +215,7 @@ class RequiredServices(object):
         dhcp_config = utils.robust_open_file(self.dhcp_config_file)
         if dhcp_config["exit_code"] != 0:
             description = "Can't open {}".format(self.dhcp_config_file)
-            Logger.record_command_result(description, dhcp_config, "error")
+            Logger.record_command_result(description, "error", dhcp_config)
             return
 
         # Convert useful configures to a string
@@ -245,7 +239,7 @@ class RequiredServices(object):
                     self.dhcp_ip_range["end_ip"] = subnet_match[2]
         for value in unconfig_keys:
             description = "RackHD required dhcpd configure {} is incorrect".format(value)
-            Logger.record_log_message(description, "", "error")
+            Logger.record_log_message(description, "error", "")
 
     def run_test(self):
         """
@@ -285,7 +279,7 @@ class RackhdConfigure(object):
             result = utils.robust_load_json_file(path)
             if result["exit_code"]:
                 description = "Load RackHD configure file {}".format(path)
-                Logger.record_command_result(description, result, "error")
+                Logger.record_command_result(description, "error", result)
             else:
                 self.rackhd_config = result["message"]
                 self.unchecked_configs = self.rackhd_config.keys()
@@ -298,7 +292,7 @@ class RackhdConfigure(object):
         result = utils.robust_load_json_file(self.template_file_path)
         if result["exit_code"]:
             description = "Load RackHD configure file {}".format(self.template_file_path)
-            Logger.record_command_result(description, result, "error")
+            Logger.record_command_result(description, "error", result)
         else:
             self.rackhd_config_template = result["message"]
 
@@ -313,7 +307,7 @@ class RackhdConfigure(object):
             if config is None:
                 description = "RackHD configuration item {} is not specified".format(key)
                 Logger.record_log_message(
-                    description, '', self.log_level[template_key]["missing"])
+                    description, self.log_level[template_key]["missing"], '')
                 continue
             self.unchecked_configs.remove(key)
             if value == "":  # value is empty means we don't care value of this items
@@ -323,7 +317,7 @@ class RackhdConfigure(object):
                 # details = "Default value: {}, user value: {}".format(value, config)
                 details = ''
                 Logger.record_log_message(
-                    description, details, self.log_level[template_key]["unequal"])
+                    description, self.log_level[template_key]["unequal"], details)
 
     def validate_config_items(self):
         """
@@ -339,7 +333,7 @@ class RackhdConfigure(object):
         for key in self.unchecked_configs:
             description = "Configuration item {} is specified".format(key)
             details = "{}: {}".format(key, self.rackhd_config.get(key))
-            Logger.record_log_message(description, details, "info")
+            Logger.record_log_message(description, "info", details)
 
     def run_test(self):
         """
@@ -375,18 +369,17 @@ class Tools(object):
         :param version: tool version got
         :return: Boolean value, True for valid version False for invalid version
         """
-        if not requirement:
-            return True
-        if requirement.has_key("among") and real_version not in requirement["among"]:
-            return False
-        if requirement.has_key("min") and \
-                utils.tool_version_compare(real_version, requirement["min"]) == -1:
-            return False
-        if requirement.has_key("max") and \
-                utils.tool_version_compare(real_version, requirement["max"]) == 1:
-            return False
-        if requirement.has_key("exclusive") and real_version in requirement["exclusive"]:
-            return False
+        version_validate_result = {
+            "min": # version should larger than min, smaller than min will give False
+                utils.tool_version_compare(real_version, requirement.get("min", None)) == 1,
+            "max": # version should smaller than max, larger than max will give False
+                utils.tool_version_compare(real_version, requirement.get("max", None)) == -1,
+            "among": real_version in requirement.get("among", [real_version]),
+            "exclusive": real_version not in requirement.get("exclusive", [])
+        }
+        for key, value in requirement.items():
+            if not value and not version_validate_result[key]:
+                return False
         return True
 
     def validate_tool_list(self):
@@ -398,19 +391,19 @@ class Tools(object):
             cmd = tool.get("getVersionCommand", [tool_name, "--version"])
             redirect_flag = tool.get("redirect", False)  # Flag for redirecting stderr to stdout
             isRequired = tool.get("isRequired", True) # By default tool is required
-            description = "Get version for tool {}".format(tool_name)
+            description = "Check version for tool {}".format(tool_name)
             version_info = utils.get_tool_version(cmd, redirect_flag)
             if version_info["exit_code"] == 0:
                 version_requirement = tool.get("version", {})
                 is_valid = self.validate_requirement(version_requirement, version_info["message"])
                 if not is_valid:
-                    version_info["exit_code"] == -1
-                    version_info["message"] == "Tool version is invalid"
+                    version_info["exit_code"] = -1
+                    version_info["message"] = "Tool version is invalid"
             if isRequired:
                 level = "error"
             else:
-                level = "info"
-            Logger.record_command_result(description, version_info, level)
+                level = "warning"
+            Logger.record_command_result(description, level, version_info)
 
     def run_test(self):
         """
@@ -423,8 +416,8 @@ class StaticFiles(object):
     """
     RackHD static files test suite
     """
-    def __init__(self, path=None):
-        self.source_code_path = path or CONFIGURATION["sourceCodeRepo"]
+    def __init__(self):
+        self.source_code_path = CONFIGURATION["sourceCodeRepo"]
         self.requiredStaticFiles = CONFIGURATION["requiredStaticFiles"]
         self.optionalStaticFiles = CONFIGURATION.get("optionalStaticFiles", [])
 
@@ -451,7 +444,7 @@ class StaticFiles(object):
                     level = log_level
                     description += " failed"
                     details = "File {} doesn't exist".format(file_name)
-                Logger.record_log_message(description, details, level)
+                Logger.record_log_message(description, level, details)
 
     def run_test(self):
         """
@@ -491,7 +484,7 @@ class RackhdAPI(object):
         http_connect.request(self.http_method, self.get_sku_api)
         response = http_connect.getresponse()
         if response.status not in self.accepted_response_code:
-            Logger.record_log_message("Can't get SKUs", "", "info")
+            Logger.record_log_message("Can't get SKUs", "info", "")
             return
         platforms = []
         body = json.loads(response.read())
@@ -501,7 +494,7 @@ class RackhdAPI(object):
             description = "Injected RackHD SKUs: {}".format(" ,".join(platforms))
         else:
             description = "No SKU is injected"
-        Logger.record_log_message(description, "", "info")
+        Logger.record_log_message(description, "info", "")
         http_connect.close()
 
     def run_api_get_tests(self):
@@ -514,10 +507,10 @@ class RackhdAPI(object):
             response = http_connect.getresponse()
             if response.status not in self.accepted_response_code:
                 description = "Failed to GET API {}".format(api)
-                Logger.record_log_message(description, "", "error")
+                Logger.record_log_message(description, "error", "")
             else:
                 description = "Succeeded to GET API {}".format(api)
-                Logger.record_log_message(description, "", "debug")
+                Logger.record_log_message(description, "debug", "")
 
     def run_test(self):
         """
@@ -552,7 +545,7 @@ class HardwareResource(object):
             info = info.split(":")
             cpu_info[info[0].strip(" ")] = info[-1].strip(" ")
         description = "RackHD server CPU info: {}".format(str(cpu_info))
-        Logger.record_log_message(description, "", "debug")
+        Logger.record_log_message(description, "debug", "")
         return cpu_info
 
     def get_mem_info(self):
@@ -572,7 +565,7 @@ class HardwareResource(object):
         for title, data in zip(title_list, data_list):
             mem_info[title] = data
         description = "RackHD server memory info: {}".format(str(mem_info))
-        Logger.record_log_message(description, "", "debug")
+        Logger.record_log_message(description, "info", "")
         return mem_info
 
     def get_disk_capacity(self):
@@ -587,7 +580,7 @@ class HardwareResource(object):
         match = pattern.search(disk_info)
         capacity = match.group()
         description = "RackHD server disk capacity: {}".format(capacity)
-        Logger.record_log_message(description, "", "debug")
+        Logger.record_log_message(description, "info", "")
         return capacity
 
     def validate_resource(self):

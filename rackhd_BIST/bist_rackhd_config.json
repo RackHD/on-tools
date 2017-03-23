@@ -3,7 +3,6 @@
         "/opt/onrack/etc/monorail.json",
         "/opt/monorail/config.json"
     ],
-    "logPath": "/var/log/rackhd/",
     "rackhdServices": [
         "on-taskgraph",
         "on-http",
@@ -46,23 +45,23 @@
             "isRequired": true,
             "name": "rabbitmq",
             "version": {
-                "among": [],
-                "exclusive": [],
-                "max": "2.6.10",
-                "min": "2.6.10"
+                "min": "3.2.4"
             }
         },
         {
             "getVersionCommand": ["mongo", "--version"],
             "isRequired": true,
-            "name": "mongo"
+            "name": "mongo",
+            "version": {
+                "min": "2.4.9",
+                "exclusive": ["2.6.10"]
+            }
         },
         {
             "getVersionCommand": ["dhcpd", "--version"],
             "isRequired": true,
             "name": "isc-dhcp-server",
-            "redirect": true,
-            "version": {}
+            "redirect": true
         },
         {
             "getVersionCommand": ["ipmitool","-V"],

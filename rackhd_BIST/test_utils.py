@@ -4,7 +4,7 @@
 # -*- coding: UTF-8 -*-
 
 """
-    Test utilities for RackHD built in self test script.
+    Test utilities for RackHD built-in self-test script.
     This file packs frequently used functions and classes for RackHD BIST
 """
 
@@ -15,8 +15,6 @@ import json
 import time
 import subprocess
 import logging
-
-LOGGER_NAME = "rackhd_bist_log"
 
 def get_configurations():
     """
@@ -115,6 +113,8 @@ def initiate_logger(name, path):
     logger = logging.getLogger(name)
     logger.setLevel(logging.DEBUG)
     time_string = time.strftime("%Y-%m-%d_%H:%M:%S", time.localtime())
+    if not os.path.exists(path):
+        os.mkdir(path)
     logfile_name = os.path.join(path, "rackhd_bist_{}.log".format(time_string))
     logfile = logging.FileHandler(logfile_name)
     console = logging.StreamHandler()
@@ -133,10 +133,13 @@ def tool_version_compare(version_a, version_b):
     Compare for tool version:
     :param version_a: version to be compared
     :param version_b: version to be compared
-    :return  1:  version_a is larger than version_b
-            0:  version_a equals version b
+    :return  1: version_a is larger than version_b
+             0: version_a equals version b
             -1: version-a is smaller than version b
+            -2: input parameters include empty value
     """
+    if not version_a or not version_b:
+        return -2
     version_a_bits = version_a.split(".")
     version_b_bits = version_b.split(".")
     if version_a_bits > version_b_bits:
@@ -171,12 +174,11 @@ class Logger(object):
     RackHD BIST specified logging class
     """
     def __init__(self):
-        self.logger = initiate_logger(
-            "rackhd_bist_log",
-            CONFIGURATION.get('logPath')
-        )
+        self.name = "rackhd_bist_log"
+        self.path = os.path.join(os.getcwd(), "log/")
+        self.logger = initiate_logger(self.name, self.path)
 
-    def record_log_message(self, description, details, level):
+    def record_log_message(self, description, level, details):
         """
         Record RackHD BIST log message in a unified format
         :param description: short log description for a test, required
@@ -184,13 +186,14 @@ class Logger(object):
         :param level: logging level, one of ["debug", "info", "warning", "error" ]
         """
         assert level in ["info", "warning", "error", "debug"], "Logging level is incorrect"
+        assert isinstance(description, str), "Log description should be a string"
         log_message = '[message]: {}  '.format(description)
         if details:
             log_message = log_message + '[details]: {}'.format(details)
         logger_method = getattr(self.logger, level)
         logger_method(log_message)
 
-    def record_command_result(self, description, status, level):
+    def record_command_result(self, description, level, status):
         """
         Logging according command output
         :param status: return of robust_check_output, robust_open_file or robust_load_json_file,
@@ -205,4 +208,4 @@ class Logger(object):
             description = description + " succeeded"
         else:
             description = description + " failed"
-        self.record_log_message(description, details, level)
+        self.record_log_message(description, level, details)

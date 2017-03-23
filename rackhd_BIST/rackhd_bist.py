@@ -4,9 +4,16 @@
 # -*- coding: UTF-8 -*-
 
 """
-    RackHD built in self test script.
+    RackHD built-in self-test script.
     This script will run some tests to check RackHD configurations and RackHD running environment
-    health status.
+    health status. RackHD BIST tests include:
+        1. RackHD services start/stop and heartbeat signals monitoring
+        2. RackHD required services status check
+        3. RackHD required tools version check
+        4. RackHD required static file existence check
+        5. RackHD configuration file validation
+        6. Optional APIs GET tests
+        7. Hardware resources check
 """
 
 import argparse
@@ -21,22 +28,21 @@ arg_list = parser.parse_args()
 
 if __name__ == "__main__":
 
-    print "Starting RackHD build in self test..."
-    static_files = test_suites.StaticFiles(arg_list.path)
-    tools = test_suites.Tools()
-    rackhd_require_services = test_suites.RequiredServices()
-    hardware_resource = test_suites.HardwareResource()
-    configure_file = test_suites.RackhdConfigure()
-    rackhd_services = test_suites.RackhdServices(arg_list.path)
-    apis = test_suites.RackhdAPI()
+    # RackHD BIST test suites in sequence
+    bist_test_suites = ["StaticFiles", "Tools",
+                        "RequiredServices", "HardwareResource",
+                        "RackhdConfigure", "RackhdServices",
+                        "RackhdAPI"]
+    print "Starting RackHD built-in self-test..."
 
-    static_files.run_test()
-    tools.run_test()
-    rackhd_require_services.run_test()
-    hardware_resource.run_test()
-    configure_file.run_test()
-    rackhd_services.run_test()
-    apis.run_test()
+    if arg_list.path:
+        test_suites.CONFIGURATION["sourceCodeRepo"] = arg_list.path
+
+    for test_suite in bist_test_suites:
+        test_class = getattr(test_suites, test_suite)
+        test_class().run_test()
+
     if not arg_list.start: # RackHD services will be stopped default
-        rackhd_services.stop_rackhd_services()
-    print "RackHD built in self test completed!"
+        test_suites.RackhdServices().stop_rackhd_services()
+
+    print "RackHD built-in self-test completed!"
