@@ -153,6 +153,9 @@ def determine_os_ver(srcdir, iso_info):
             print 'attempting LiveCD netboot'
             osname = 'LiveCD'
             osver = vid
+            for i in src_dir_list:
+                if 'PHOTON' in i:
+                    osname = 'PHOTON'
 
         elif 'suse' in src_dir_list:
             osname = 'SUSE'
