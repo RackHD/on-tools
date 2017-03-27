@@ -28,7 +28,6 @@ def get_configurations():
     if user_bist_config["exit_code"]:
         print user_bist_config["message"]
         sys.exit(-1)
-    print "Load BIST configuration files successfully"
 
     #user_bist_config can override rackhd_bist_config
     return dict(rackhd_bist_config["message"], **user_bist_config["message"])
@@ -119,7 +118,7 @@ def initiate_logger(name, path):
     logfile = logging.FileHandler(logfile_name)
     console = logging.StreamHandler()
     logfile.setLevel(logging.DEBUG)  # Log file will record all messages
-    console.setLevel(logging.WARNING)  # Console will report WARNNING and ERROR
+    console.setLevel(logging.DEBUG)  # Console will report WARNNING and ERROR
     formatter = logging.Formatter(
         '[%(levelname)-7s][%(asctime)-15s] %(message)s'
     )
@@ -177,6 +176,32 @@ class Logger(object):
         self.name = "rackhd_bist_log"
         self.path = os.path.join(os.getcwd(), "log/")
         self.logger = initiate_logger(self.name, self.path)
+        self.indent = "  "
+        self.details_indent = "    "
+        self.colored_headers = {
+            "warning": "\033[93m" + self.indent + u'\u2717'.encode('utf8') + " ", # yellow
+            "error": "\033[91m" + self.indent + u'\u2718'.encode('utf8') + " ", # red
+            "debug": "\033[92m" + self.indent + u'\u2713'.encode('utf8') + " ", # green
+            "info": "\033[92m" + self.indent + '-' + " ", # green
+            "details": "\033[90m" + self.details_indent, # grey
+            "title": "\033[1m", # bold
+            "end": "\033[0m" # end
+        }
+
+    def print_test_suite_name(self, name):
+        """
+        Print class name
+        """
+        log_message = '{0}{1}{2}'.format(
+            self.colored_headers["title"], name, self.colored_headers["end"])
+        print log_message
+
+    def create_colored_log(self, log, color):
+        """
+        Print class name
+        """
+        colored_log = '{0}{1}{2}'.format(color, log, self.colored_headers["end"])
+        return colored_log
 
     def record_log_message(self, description, level, details):
         """
@@ -187,9 +212,16 @@ class Logger(object):
         """
         assert level in ["info", "warning", "error", "debug"], "Logging level is incorrect"
         assert isinstance(description, str), "Log description should be a string"
-        log_message = '[message]: {}  '.format(description)
+        #log_message = self.description_indent + description  # 2 space indent
+        log_message = description  # 2 space indent
         if details:
-            log_message = log_message + '[details]: {}'.format(details)
+            if level == "warning" or level == "error":
+                #details = self.details_indent + details  # 4 space indents
+                details = self.create_colored_log(details, self.colored_headers["details"])
+                log_message = log_message + "\n" + details
+            else:
+                log_message = log_message + ": " + details
+        log_message = self.create_colored_log(log_message, self.colored_headers[level])
         logger_method = getattr(self.logger, level)
         logger_method(log_message)
 
@@ -205,7 +237,7 @@ class Logger(object):
         details = status["message"].strip("\n")
         if status["exit_code"] == 0:
             level = 'debug'
-            description = description + " succeeded"
+            #description = description + " succeeded"
         else:
             description = description + " failed"
         self.record_log_message(description, level, details)

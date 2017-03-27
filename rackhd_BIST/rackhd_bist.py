@@ -33,16 +33,18 @@ if __name__ == "__main__":
                         "RequiredServices", "HardwareResource",
                         "RackhdConfigure", "RackhdServices",
                         "RackhdAPI"]
-    print "Starting RackHD built-in self-test..."
+    print "\nStarting RackHD built-in self-test..."
 
     if arg_list.path:
         test_suites.CONFIGURATION["sourceCodeRepo"] = arg_list.path
 
     for test_suite in bist_test_suites:
+        test_suites.Logger.print_test_suite_name("\n" + test_suite + "\n")
         test_class = getattr(test_suites, test_suite)
         test_class().run_test()
 
     if not arg_list.start: # RackHD services will be stopped default
+        test_suites.Logger.print_test_suite_name("\nRackHDStop\n")
         test_suites.RackhdServices().stop_rackhd_services()
 
-    print "RackHD built-in self-test completed!"
+    print "\nRackHD built-in self-test completed!"

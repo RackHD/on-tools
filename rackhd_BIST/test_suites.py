@@ -53,53 +53,61 @@ class RackhdServices(object):
             result = utils.robust_check_output(cmd)
             Logger.record_command_result(description, 'error', result)
 
-    def __operate_user_rackhd(self, operator):
+    def __get_pid_executing_path(self, pid):
         """
-        Start or stop RackHD services from user provided RackHD code repo
-        :param operator: operator for RackHD service, should be "start" or "stop"
+        Get Linux pid executing path
+        :param pid: Linux process id
+        :return: pid executing path string, an example: "/home/onrack/src/on-http"
         """
-        if operator == "start":
-            for service in self.services:
-                description = "Start RackHD service {}".format(service)
-                os.chdir(os.path.join(self.source_code_path, service))
-                cmd = ["node index.js > /dev/null 2>&1 &"]  # RackHD services need run in background
-                result = utils.robust_check_output(cmd=cmd, shell=True)
-                Logger.record_command_result(description, 'error', result)
-        else:
-            get_process_cmd = ['ps aux | grep node| grep index.js | sed "/grep/d"| ' \
-                               'sed "/sudo/d" | awk \'{print $2}\' | sort -r -n']
-            output = utils.robust_check_output(cmd=get_process_cmd, shell=True)
-            process_list = output["message"].strip("\n").split("\n")
-            for kid in process_list:
-                description = "Stop RackHD service {}".format(kid)
-                cmd = ["kill", "-9", kid]
-                result = utils.robust_check_output(cmd)
-                Logger.record_command_result(description, 'error', result)
+        # ls -l /proc/<pid> output example
+        # lrwxrwxrwx 1 root root   0 Mar 28 14:11 cwd -> /home/onrack/src/on-http
+        cmd = ["sudo ls -l /proc/{0} | grep cwd | awk '{{print $NF}}'".format(pid)]
+        output = utils.robust_check_output(cmd, shell=True)
+        return output["message"].strip("\n")
 
-    def __operate_rackhd_services(self, operator):
+    def __stop_user_rackhd(self):
         """
-        Operate RackHD services
-        :param operator: operations on RackHD services, should be either "start" or "stop"
+        Stop RackHD services from user provided RackHD code repo
         """
-        assert operator in ["start", "stop"], "RackHD service operator should be start or stop"
-        if self.source_code_path != "/var/renasar" or self.source_code_path != "/var/renasar/":
-            self.__operate_user_rackhd(operator)
-        else:
-            self.__operate_regular_rackhd(operator)
-        description = "RackHD services {}ed".format(operator)
-        Logger.record_log_message(description, "info", "")
+        get_pid_cmd = ['ps aux | grep node| grep index.js | sed "/grep/d"| ' \
+                            'sed "/sudo/d" | awk \'{print $2}\' | sort -r -n']
+        output = utils.robust_check_output(cmd=get_pid_cmd, shell=True)
+        process_list = output["message"].strip("\n").split("\n")
+        for pid in process_list:
+            pid_service_name = self.__get_pid_executing_path(pid).split("/")[-1]
+            kill_pid_cmd = ["kill", "-9", pid]
+            result = utils.robust_check_output(kill_pid_cmd)
+            description = "Stop RackHD service {}".format(pid_service_name)
+            Logger.record_command_result(description, 'error', result)
+
+    def __start_user_rackhd(self):
+        """
+        Start RackHD services from user provided RackHD code repo
+        """
+        for service in self.services:
+            description = "Start RackHD service {}".format(service)
+            os.chdir(os.path.join(self.source_code_path, service))
+            cmd = ["node index.js > /dev/null 2>&1 &"]  # RackHD services need run in background
+            result = utils.robust_check_output(cmd=cmd, shell=True)
+            Logger.record_command_result(description, 'error', result)
 
     def start_rackhd_services(self):
         """
         Start RackHD Services
         """
-        self.__operate_rackhd_services("start")
+        if self.source_code_path != "/var/renasar" or self.source_code_path != "/var/renasar/":
+            self.__start_user_rackhd()
+        else:
+            self.__operate_regular_rackhd("start")
 
     def stop_rackhd_services(self):
         """
         Stop RackHD Services
         """
-        self.__operate_rackhd_services("stop")
+        if self.source_code_path != "/var/renasar" or self.source_code_path != "/var/renasar/":
+            self.__stop_user_rackhd()
+        else:
+            self.__operate_regular_rackhd("stop")
 
     def __close_amqp_connection(self):
         """
@@ -135,16 +143,16 @@ class RackhdServices(object):
         connection.add_timeout(self.amqp_connect_timeout, self.__amqp_timeout_callback)
         self.amqp_connection["channel"] = channel
         self.amqp_connection["connection"] = connection
-        print "Waiting for RackHD services heartbeat signals..."
+        # print "Waiting for RackHD services heartbeat signals..."
         try:
             for method_frame, properties, body in channel.consume(queue_name):
                 channel.basic_ack(method_frame.delivery_tag)
                 service = method_frame.routing_key.split('.')[-1]
                 if service in self.heartbeat_unavailable_flags:
                     self.heartbeat_unavailable_flags.remove(service)
-                if not self.heartbeat_unavailable_flags:
-                    description = "Hearbeat signals for RackHD services are healthy"
+                    description = "Received heartbeat signal from RackHD service {}".format(service)
                     Logger.record_log_message(description, "debug", "")
+                if not self.heartbeat_unavailable_flags:
                     self.__close_amqp_connection()
                     break
         except pika.exceptions.ConnectionClosed:
@@ -237,9 +245,13 @@ class RequiredServices(object):
                     subnet_match = match.groups()
                     self.dhcp_ip_range["start_ip"] = subnet_match[1]
                     self.dhcp_ip_range["end_ip"] = subnet_match[2]
-        for value in unconfig_keys:
-            description = "RackHD required dhcpd configure {} is incorrect".format(value)
-            Logger.record_log_message(description, "error", "")
+        if not unconfig_keys:
+            description = "RackHD required dhcpd configure is correct"
+            Logger.record_log_message(description, "debug", "")
+        else:
+            for value in unconfig_keys:
+                description = "RackHD required dhcpd configure {} is incorrect".format(value)
+                Logger.record_log_message(description, "error", "")
 
     def run_test(self):
         """
@@ -262,8 +274,8 @@ class RackhdConfigure(object):
                 "unequal": "warning"
             },
             "optional": {
-                "missing": "info",
-                "unequal": "debug"
+                "missing": "warning",
+                "unequal": "warning"
             }
         }
         self.config_file_paths = CONFIGURATION.get("configFile")
@@ -314,10 +326,12 @@ class RackhdConfigure(object):
                 pass
             elif config != value:
                 description = "RackHD configuration item {} is not typical value".format(key)
-                # details = "Default value: {}, user value: {}".format(value, config)
-                details = ''
+                details = "Typical value: {0}, User value: {1}".format(value, config)
                 Logger.record_log_message(
                     description, self.log_level[template_key]["unequal"], details)
+            else:
+                description = "Check RackHD configuration item {}".format(key)
+                Logger.record_log_message(description, 'debug', '')
 
     def validate_config_items(self):
         """
@@ -332,7 +346,7 @@ class RackhdConfigure(object):
         """
         for key in self.unchecked_configs:
             description = "Configuration item {} is specified".format(key)
-            details = "{}: {}".format(key, self.rackhd_config.get(key))
+            details = '{}: {}'.format(key, self.rackhd_config.get(key))
             Logger.record_log_message(description, "info", details)
 
     def run_test(self):
@@ -398,7 +412,7 @@ class Tools(object):
                 is_valid = self.validate_requirement(version_requirement, version_info["message"])
                 if not is_valid:
                     version_info["exit_code"] = -1
-                    version_info["message"] = "Tool version is invalid"
+                    version_info["message"] = "Tool {} version is invalid".format(tool_name)
             if isRequired:
                 level = "error"
             else:
@@ -434,12 +448,13 @@ class StaticFiles(object):
             file_path = os.path.join(self.source_code_path, file_obj.get("dirPath", ""))
             file_list = file_obj.get("fileList", [])
             for file_name in file_list:
+                details = ''
                 description = "Check existence of file {}".format(file_name)
                 file_name = os.path.join(file_path, file_name)
                 if os.path.isfile(file_name):
                     level = "debug"
-                    description += " succeeded"
-                    details = "File {} exists".format(file_name)
+                    #description += " succeeded"
+                    #details = "File {} exists".format(file_name)
                 else:
                     level = log_level
                     description += " failed"
@@ -544,8 +559,9 @@ class HardwareResource(object):
         for info in info_list:
             info = info.split(":")
             cpu_info[info[0].strip(" ")] = info[-1].strip(" ")
-        description = "RackHD server CPU info: {}".format(str(cpu_info))
-        Logger.record_log_message(description, "debug", "")
+        description = "RackHD server CPU info: {} cores, {}MHz,".format(
+            cpu_info["CPU(s)"], cpu_info["CPU MHz"])
+        Logger.record_log_message(description, "info", "")
         return cpu_info
 
     def get_mem_info(self):
@@ -564,7 +580,7 @@ class HardwareResource(object):
         mem_info = {}
         for title, data in zip(title_list, data_list):
             mem_info[title] = data
-        description = "RackHD server memory info: {}".format(str(mem_info))
+        description = "RackHD server memory size: {}".format(mem_info["total"])
         Logger.record_log_message(description, "info", "")
         return mem_info
 
