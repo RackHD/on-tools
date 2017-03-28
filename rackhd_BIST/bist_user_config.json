@@ -1,0 +1,20 @@
+{
+    "apis": [
+        "/api/current/skus",
+        "/api/current/nodes",
+        "/api/current/pollers"
+    ],
+    "optionalStaticFiles": [
+        {
+            "dirPath": "on-http/static/http/common/",
+            "fileList": [
+                "dell.raid.overlay.cpio.gz",
+                "raid.overlay.cpio.gz",
+                "secure.erase.overlay.cpio.gz",
+                "zerotouch-vEOS.swi",
+                "overlayfs_all_files.trusty.MOCKS.cpio.gz"
+            ]
+        }
+    ],
+    "sourceCodeRepo": "/var/renasar/"
+}
