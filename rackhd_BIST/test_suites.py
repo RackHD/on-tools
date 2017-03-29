@@ -26,20 +26,57 @@ class RackhdServices(object):
     """
     def __init__(self):
         self.source_code_path = CONFIGURATION.get("sourceCodeRepo")
+        self.is_regular_repo = (self.source_code_path == "/var/renasar") or (
+            self.source_code_path == "/var/renasar/")
         self.services = CONFIGURATION.get("rackhdServices")
         self.heartbeat_unavailable_flags = self.services[:]
         self.amqp_address = {"host": "localhost", "port": 5672}
         self.amqp_connect_timeout = 20
         self.amqp_connection = {}
 
+    def __get_version_from_dpkg(self, service):
+        """
+        Check RackHD version from 'dpkg -l' output
+        """
+        # dpkg -l output example:
+        #   ii  on-http 2.0.0-20170316UTC-25c81ec  amd64  RackHD HTTP engine service
+        cmd = ["dpkg -l | grep {} | awk '{{print $3}}'".format(service)]
+        result = utils.robust_check_output(cmd=cmd, shell=True)
+        if not result["message"]:
+            result["exit_code"] = -1
+        return result
+
+    def __get_version_from_commitstring(self, service):
+        """
+        Check RackHD version from commitstring.txt file
+        """
+        commitStringPath = os.path.join(self.source_code_path, service, "commitstring.txt")
+        result = utils.robust_open_file(commitStringPath)
+        return result
+
+    def __get_version_from_package(self, service):
+        """
+        Check RackHD version from package.json file
+        """
+        package_file_path = os.path.join(self.source_code_path, service, "package.json")
+        result = utils.robust_load_json_file(package_file_path)
+        version = result["message"].get("version")
+        if not result["exit_code"] and version:
+            result["message"] = version
+        return result
+
     def check_service_version(self):
         """
-        Check RackHD version for each service
+        Check RackHD version
         """
         for service in self.services:
             description = "Check service {} version".format(service)
-            commitStringPath = os.path.join(self.source_code_path, service, "commitstring.txt")
-            result = utils.robust_open_file(commitStringPath)
+            if self.is_regular_repo:
+                result = self.__get_version_from_dpkg(service)
+                if result["exit_code"]:  # if failed to get version from dpkg, try commitstring
+                    result = self.__get_version_from_commitstring(service)
+            else:
+                result = self.__get_version_from_package(service)
             Logger.record_command_result(description, "warning", result)
 
     def __operate_regular_rackhd(self, operator):
@@ -51,6 +88,8 @@ class RackhdServices(object):
             description = "{} RackHD service {}".format(operator.capitalize(), service)
             cmd = ["service", service, operator]
             result = utils.robust_check_output(cmd)
+            if not result["exit_code"]:
+                result["message"] = ""
             Logger.record_command_result(description, 'error', result)
 
     def __get_pid_executing_path(self, pid):
@@ -95,19 +134,19 @@ class RackhdServices(object):
         """
         Start RackHD Services
         """
-        if self.source_code_path != "/var/renasar" or self.source_code_path != "/var/renasar/":
-            self.__start_user_rackhd()
-        else:
+        if self.is_regular_repo:
             self.__operate_regular_rackhd("start")
+        else:
+            self.__start_user_rackhd()
 
     def stop_rackhd_services(self):
         """
         Stop RackHD Services
         """
-        if self.source_code_path != "/var/renasar" or self.source_code_path != "/var/renasar/":
-            self.__stop_user_rackhd()
-        else:
+        if self.is_regular_repo:
             self.__operate_regular_rackhd("stop")
+        else:
+            self.__stop_user_rackhd()
 
     def __close_amqp_connection(self):
         """
@@ -177,9 +216,10 @@ class RequiredServices(object):
         self.dhcp_config_file = "/etc/dhcp/dhcpd.conf"
         self.dhcp_ip_range = {"start_ip": '', "end_ip": ''}
         self.dhcp_rackhd_config = {
-            "subnet": 'subnet 172\.31\.128\.0 netmask 255\.255\.252\.0\s*{' \
-                '\s*(range (172\.31\.\d{1,3}\.\d{1,3}) (172\.31\.\d{1,3}\.\d{1,3}))+;' \
-                'option vendor-class-identifier "PXEClient";\s*}',
+            "subnet": 'subnet 172\.31\.128\.0 netmask 255\.255\.\d{3}\.0\s*{' \
+                '.*(range (172\.31\.\d{1,3}\.\d{1,3}) (172\.31\.\d{1,3}\.\d{1,3}))+;' \
+                '.*option vendor-class-identifier "PXEClient";' \
+                '.*}',
             "ignore-client-uids": 'ignore-client-uids.*true;',
             "deny duplicates": 'deny.*duplicates;'
         }
@@ -289,13 +329,13 @@ class RackhdConfigure(object):
         """
         for path in self.config_file_paths:
             result = utils.robust_load_json_file(path)
-            if result["exit_code"]:
-                description = "Load RackHD configure file {}".format(path)
-                Logger.record_command_result(description, "error", result)
-            else:
+            if not result["exit_code"]:
                 self.rackhd_config = result["message"]
                 self.unchecked_configs = self.rackhd_config.keys()
+                result["message"] = ""
                 break
+        description = "Load RackHD configure file"
+        Logger.record_command_result(description, "error", result)
 
     def load_config_template(self):
         """
@@ -470,15 +510,15 @@ class StaticFiles(object):
 
 class RackhdAPI(object):
     """
-    RackHD APIs test suite
+    RackHD southbound APIs test suite
     """
     def __init__(self):
         self.api_list = CONFIGURATION["apis"]
         self.http_method = "GET"
         self.accepted_response_code = [200]
         self.http_config = {
-            "host": "localhost",
-            "port": 8080,
+            "host": "172.31.128.1",
+            "port": 9080,
             "timeout": 10
         }
         self.get_sku_api = "/api/current/skus"
@@ -589,12 +629,14 @@ class HardwareResource(object):
         Get disk capacity, fdisk -l output first line example:
             Disk /dev/sda: 104.9 GB, 104857600000 bytes
         """
-        result = utils.robust_check_output(self.disk_command)
+        result = utils.robust_check_output(self.disk_command, shell=False, redirect=True)
         info_list = result["message"].strip("\n").strip(" ").split("\n")
-        disk_info = info_list[0]
-        pattern = re.compile("\d{0,5}\.?\d{0,3}\s+(T|G|M)B", re.I)
-        match = pattern.search(disk_info)
-        capacity = match.group()
+        for disk_info in info_list:
+            pattern = re.compile("Disk /dev/sd[a-z]{1,3}:\s+(\d{0,5}\.?\d{0,3}\s+(T|G|M)i?B)", re.I)
+            match = pattern.search(disk_info)
+            if match:
+                capacity = match.group(1)
+                break
         description = "RackHD server disk capacity: {}".format(capacity)
         Logger.record_log_message(description, "info", "")
         return capacity
