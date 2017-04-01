@@ -22,7 +22,6 @@
                 "monorail-efi32-snponly.efi",
                 "monorail.intel.ipxe",
                 "monorail-undionly.kpxe",
-                "undionly.kpxe",
                 "monorail-efi64-snponly.efi",
                 "monorail.ipxe",
                 "undionly.kkpxe"
