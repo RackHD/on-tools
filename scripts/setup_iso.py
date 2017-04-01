@@ -149,7 +149,7 @@ def determine_os_ver(srcdir, iso_info):
             assert m.group(1), "The version name(e.g., unbuntu-server) for ubuntu is not correct"
             assert m.group(2), "The version for ubuntu is not correct"
             osver = m.group(1) + '-' + m.group(2)
-        elif 'isolinux' in src_dir_list:
+        elif 'LiveOS' in src_dir_list and 'isolinux' in src_dir_list:
             print 'attempting LiveCD netboot'
             osname = 'LiveCD'
             osver = vid
