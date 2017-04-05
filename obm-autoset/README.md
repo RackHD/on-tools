@@ -47,6 +47,9 @@ Specify if authentication is on/off , default:off
 This file contains the credentials required to access the ora/bmcs. It includes:
 
 "ora": RackHD ora ssh credential.
+
 "bmc": bmc/rmm credential list.
-"api": RackHD api login credential
+
+"api": RackHD api login credential.
+
 "ports":http/https tcp port number.
