@@ -3,22 +3,26 @@ Tool to apply OBM setting for each compute node discovered by RackHD. Save the t
 
 ## Usage
 Downlaod this folder.
-Make sure you have python 2 or python 3 installed
+
+Make sure you have python 2 or python 3 installed.
+
 cd to the cloned directory.
+
 Change the environment setting in obm_setting.json file.
-python ApplyOBMSetting.py -ora 192.168.129.96
+
+'python ApplyOBMSetting.py -ora 192.168.129.96'
 
 ## Theory of Operation
 The script will check the RMM/BMC address information in the catalog of ora. And then put OBM setting to ora by RackHD 2.0 API. The compute node should be discovered by RackHD ora first.
 
 ## Supported parameters
-### -ora
+### -ora {RackHD IP}
 Specify RackHD ora IP address, default use localhost
 
-### -user
+### -user {username}
 Override the usernames in OBM setting file, default is "None"
 
-### -password
+### -password {passoword}
 Override the password in OBM setting file, default is "None"
 
 
@@ -41,6 +45,7 @@ Specify if authentication is on/off , default:off
 
 ## obm_setting.json Config File
 This file contains the credentials required to access the ora/bmcs. It includes:
+
 "ora": RackHD ora ssh credential.
 "bmc": bmc/rmm credential list.
 "api": RackHD api login credential
