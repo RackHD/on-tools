@@ -631,6 +631,7 @@ class HardwareResource(object):
         """
         result = utils.robust_check_output(self.disk_command, shell=False, redirect=True)
         info_list = result["message"].strip("\n").strip(" ").split("\n")
+        capacity = ""
         for disk_info in info_list:
             pattern = re.compile("Disk /dev/sd[a-z]{1,3}:\s+(\d{0,5}\.?\d{0,3}\s+(T|G|M)i?B)", re.I)
             match = pattern.search(disk_info)
