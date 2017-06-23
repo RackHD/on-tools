@@ -7,7 +7,7 @@ def backup_db():
     try:
         subprocess.check_output(['ls dump'], shell=True);
         subprocess.check_call(['rm -rf dump*'], shell=True)
-    except CalledProcessError:
+    except subprocess.CalledProcessError:
         pass
     subprocess.check_call(['mongodump'])
     subprocess.check_call(['cp', '-rf', 'dump', 'dump.bak'])
