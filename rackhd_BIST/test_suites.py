@@ -517,8 +517,8 @@ class RackhdAPI(object):
         self.http_method = "GET"
         self.accepted_response_code = [200]
         self.http_config = {
-            "host": "172.31.128.1",
-            "port": 9080,
+            "host": "localhost",
+            "port": 8080,
             "timeout": 10
         }
         self.get_sku_api = "/api/current/skus"
