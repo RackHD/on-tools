@@ -115,7 +115,7 @@ class RackhdServices(object):
         for pid in process_list:
             pid_service_name = self.__get_pid_executing_path(pid).split("/")[-1]
             if pid_service_name not in self.services:
-               continue
+                continue
             kill_pid_cmd = ["kill", "-9", pid]
             result = utils.robust_check_output(kill_pid_cmd)
             description = "Stop RackHD service {}".format(pid_service_name)
@@ -517,7 +517,6 @@ class RackhdAPI(object):
     def __init__(self):
         self.api_list = CONFIGURATION["apis"]
         self.http_method = "GET"
-        #self.accepted_response_code = [200]
         self.http_config = {
             "host": "localhost",
             "port": 8080,
@@ -532,51 +531,62 @@ class RackhdAPI(object):
         return httplib.HTTPConnection(host=self.http_config["host"],
                                       port=self.http_config["port"],
                                       timeout=self.http_config["timeout"])
-
+   
+ 
+    def send_http_request(self, http_connect, http_api):
+        try:
+             http_connect.request(self.http_method, http_api)
+             response = http_connect.getresponse()
+             return response
+        except:
+            Logger.record_log_message("http request error", "error", "")
+            return
+             
+     
     def get_supported_skus(self):
         """
         Get support skus
         """
         http_connect = self.__initiate_rackhd_connect()
-        http_connect.request(self.http_method, self.get_sku_api)
+        http_connect.request(self.http_method, self.get_sku_api) 
+        response = http_connect.getresponse()
         
-        try:
-          response = http_connect.getresponse()
-          if response.status >= 500:
+        #http_connect = self.__initiate_rackhd_connect()
+        #response = self.send_http_request(http_connect, self.get_sku_api)
+        
+        if response.status >= 500:
             Logger.record_log_message("Can't get SKUs", "info", "")
             return
-          platforms = []
-          body = json.loads(response.read())
-          for data in body:
+        platforms = []
+        body = json.loads(response.read())
+        for data in body:
             platforms.append(data.get("name"))
-          if platforms:
-            description = "Injected RackHD SKUs: {}".format(" ,".join(platforms))
-          else:
+        if str(platforms) == '[None]':
             description = "No SKU is injected"
-          Logger.record_log_message(description, "info", "")
-          http_connect.close()
-        except:
-           Logger.record_log_message("Can't get SKUs", "info", "")
-
+        else: 
+            description = "Injected RackHD SKUs: {}".format(" ,".join(platforms))
+        Logger.record_log_message(description, "info", "")
+        http_connect.close()
+      
     def run_api_get_tests(self):
         """
         Run api GET tests for API list
         """
         for api in self.api_list:
-            try:
-              http_connect = self.__initiate_rackhd_connect()
-              http_connect.request(self.http_method, api)
+            #http_connect = self.__initiate_rackhd_connect()
+            #http_connect.request(self.http_method, api)
            
-              response = http_connect.getresponse()
-              if response.status >= 500:
+            #response = http_connect.getresponse()
+            http_connect = self.__initiate_rackhd_connect()
+            response = self.send_http_request(http_connect, api)
+    
+            if response.status >= 500:
                 description = "Failed to GET API {}".format(api)
                 Logger.record_log_message(description, "error", "")
-              else:
+            else:
                 description = "Succeeded to GET API {}".format(api)
                 Logger.record_log_message(description, "debug", "")
-            except:
-                description = "Failed to GET API {}".format(api)
-                Logger.record_log_message(description, "error", "")
+        http_connect.close()
 
     def run_test(self):
         """
