@@ -534,6 +534,11 @@ class RackhdAPI(object):
    
  
     def send_http_request(self, http_connect, http_api):
+        """
+        Define a function to catch the errors of sending http request.
+        Otherwise, it needs to catch errors many times.
+        """
+
         try:
              http_connect.request(self.http_method, http_api)
              response = http_connect.getresponse()
