@@ -547,12 +547,9 @@ class RackhdAPI(object):
         """
         Get support skus
         """
-        http_connect = self.__initiate_rackhd_connect()
-        http_connect.request(self.http_method, self.get_sku_api) 
-        response = http_connect.getresponse()
         
-        #http_connect = self.__initiate_rackhd_connect()
-        #response = self.send_http_request(http_connect, self.get_sku_api)
+        http_connect = self.__initiate_rackhd_connect()
+        response = self.send_http_request(http_connect, self.get_sku_api)
         
         if response.status >= 500:
             Logger.record_log_message("Can't get SKUs", "info", "")
@@ -560,11 +557,12 @@ class RackhdAPI(object):
         platforms = []
         body = json.loads(response.read())
         for data in body:
-            platforms.append(data.get("name"))
-        if str(platforms) == '[None]':
-            description = "No SKU is injected"
-        else: 
+            if data.get("name"):
+                platforms.append(data.get("name"))
+        if platforms:
             description = "Injected RackHD SKUs: {}".format(" ,".join(platforms))
+        else: 
+            description = "No SKU is injected"
         Logger.record_log_message(description, "info", "")
         http_connect.close()
       
@@ -573,10 +571,7 @@ class RackhdAPI(object):
         Run api GET tests for API list
         """
         for api in self.api_list:
-            #http_connect = self.__initiate_rackhd_connect()
-            #http_connect.request(self.http_method, api)
            
-            #response = http_connect.getresponse()
             http_connect = self.__initiate_rackhd_connect()
             response = self.send_http_request(http_connect, api)
     
